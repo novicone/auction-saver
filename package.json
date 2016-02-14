@@ -1,15 +1,12 @@
 {
-  "name": "chat-example",
+  "name": "auction-saver",
   "version": "0.0.0",
-  "description": "A chat example to showcase how to use `socket.io` with a static `express` server with `async` for control flow.",
+  "description": "",
   "main": "server.js",
   "repository": "",
-  "author": "Mostafa Eweda <mo.eweda@gmail.com>",
+  "author": "novic",
   "dependencies": {
-    "async": "~0.2.8",
-    "express": "~3.2.4",
     "q": "^1.4.1",
-    "sanitize-filename": "^1.5.3",
-    "socket.io": "~0.9.14"
+    "sanitize-filename": "^1.5.3"
   }
 }

@@ -1,9 +1,10 @@
 var q = require("q");
 var soap = require("soap");
 
-exports.initializeApi = initializeApi;
+exports.initialize = initializeApi;
+exports.method = createApiMethod;
 
-function initializeApi(wsdlUrl, apiKey) {
+function initializeApi(config) {
     var client;
     
     function call(name, params) {
@@ -14,13 +15,13 @@ function initializeApi(wsdlUrl, apiKey) {
             });
     }
     
-    return q.denodeify(soap.createClient)(wsdlUrl)
+    return q.denodeify(soap.createClient)(config.wsdl)
         .then(function (value) {
             client = value;
             return call("doQuerySysStatus", {
                 sysvar: 1,
                 countryId: 1,
-                webapiKey: apiKey
+                webapiKey: config.key
             });
         })
         .then(function(status) {
@@ -30,7 +31,7 @@ function initializeApi(wsdlUrl, apiKey) {
                         userLogin: credentials.login,
                         userHashPassword: credentials.password,
                         countryCode: 1,
-                        webapiKey: apiKey,
+                        webapiKey: config.key,
                         localVersion: status.verKey
                     };
                     return call("doLoginEnc", params)
@@ -69,5 +70,15 @@ function mapInfoToAuction(info) {
             .map(function(image) {
                 return image.imageUrl;
             })
+    };
+}
+
+function createApiMethod(provideApi, name) {
+    return function() {
+        var args = arguments;
+        return provideApi()
+            .then(function(api) {
+                return api[name].apply(api, args);
+            });
     };
 }

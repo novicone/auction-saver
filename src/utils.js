@@ -4,6 +4,13 @@ var sanitize = require("sanitize-filename");
 exports.createLazyProvider = createLazyProvider;
 exports.createPathGenerator = createPathGenerator;
 exports.parseAuctionId = parseAuctionId;
+exports.partial = partial;
+
+function partial(fn, arg) {
+    return function() {
+        return fn.apply(null, [arg].concat([].slice.apply(arguments)));
+    };
+}
 
 function createLazyProvider(factory) {
     var provided;

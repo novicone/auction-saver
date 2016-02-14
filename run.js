@@ -1,27 +1,32 @@
-var q = require("q");
-var initializeApi = require("./src/api").initializeApi;
+var api = require("./src/api");
 var utils = require("./src/utils");
-var storage = require("./src/storage");
 var auctions = require("./src/auctions");
 var download = require("./src/download");
 
 var config = require("./config");
 
 var provideApi = utils.createLazyProvider(function() {
-    return initializeApi(config.allegroWebapi.wsdl, config.allegroWebapi.key);
+    return api.initialize(config.allegroWebapi);
 });
-
-var sessionStorage = storage.createSessionStorage(provideApi);
-var fetchAuction = auctions.createAuctionFetcher(provideApi, sessionStorage);
 
 var generatePath = utils.createPathGenerator("images");
 
-fetchAuction(config.credentials, utils.parseAuctionId("http://allegro.pl/zygmunt-iii-zestaw-trojakow-1621-i-1622-krakow-i5940055701.html"))
-    .then(function(auction) {
-        return q.all(auction.images.map(function(imageUrl, i) {
-            return download(imageUrl, generatePath(config.credentials.login, auction, i + 1));
-        }));
+var login = api.method(provideApi, "login");
+var getAuction = api.method(provideApi, "getAuction");
+
+var createAuctionSaver = auctions.saverFactory(getAuction, generatePath, download);
+
+
+login(config.credentials)
+    .then(function(sessionHandle) {
+        var saveAuction = createAuctionSaver(
+            sessionHandle,
+            config.credentials.login);
+        
+        var id = utils.parseAuctionId("http://allegro.pl/zygmunt-iii-zestaw-trojakow-1621-i-1622-krakow-i5940055701.html");
+        
+        return saveAuction(id);
     })
     .catch(function(error) {
-        console.error(error);
+        console.error(error.message);
     });

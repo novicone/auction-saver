@@ -6,6 +6,8 @@
   "repository": "",
   "author": "novic",
   "dependencies": {
+    "body-parser": "^1.15.0",
+    "express": "^4.13.4",
     "q": "^1.4.1",
     "sanitize-filename": "^1.5.3"
   }

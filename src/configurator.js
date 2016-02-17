@@ -2,6 +2,7 @@ var api = require("./api");
 var utils = require("./utils");
 var auctions = require("./auctions");
 var download = require("./download");
+var storage = require("./storage");
 
 exports.create = function createConfigurator(config) {
     var provideApi = utils.createLazyProvider(function() {
@@ -13,21 +14,43 @@ exports.create = function createConfigurator(config) {
     var login = api.method(provideApi, "login");
     var getAuction = api.method(provideApi, "getAuction");
     
-    var createAuctionSaver = auctions.saverFactory(getAuction, generatePath, download);
+    var auctionStorage = storage.auctionStorage();
+    var createAuctionSaver = auctions.saverFactory(getAuction, auctionStorage.save, generatePath, download);
+    var getAuctionId = createAuctionIdGetter(auctionStorage.findOne);
 
     return function configure(router) {
-        router.post("/login", wrapHandler(function(req, res) {
+        router.post("/login", wrapHandler(function(req) {
             return login(req.body);
         }));
         
-        router.post("/auctions", wrapHandler(function(req, res) {
+        router.get("/auctions", wrapHandler(function(req) {
+            return auctionStorage.findAll({ _owner: req.headers.login });
+        }));
+        
+        router.post("/auctions", wrapHandler(function(req) {
             var saveAuction = createAuctionSaver(req.headers.session, req.headers.login);
             
-            return saveAuction(utils.parseAuctionId(req.body.url))
-                .then(function() {});
+            return getAuctionId(req)
+                .then(function(id) {
+                    return saveAuction(id);
+                });
         }));
     };
 };
+
+function createAuctionIdGetter(findAuction) {
+    return function getAuctionId(req) {
+        var id = utils.parseAuctionId(req.body.url);
+        
+        return findAuction(id)
+            .then(function(auction) {
+                if (auction) {
+                    throw new Error("Auction " + id + " is already saved");
+                }
+                return id;
+            });
+    };
+}
 
 function wrapHandler(handler) {
     return function handle(req, res, next) {

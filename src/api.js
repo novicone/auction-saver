@@ -58,7 +58,7 @@ function mapInfoToAuction(info) {
     return {
         id: item.itId,
         name: item.itName,
-        price: parseFloat(item.itPrice),
+        price: parseFloat(item.itPrice) || parseFloat(item.itBuyNowPrice),
         seller: item.itSellerLogin,
         endingTime: parseInt(item.itEndingTime, 10),
         finished: item.itEndingInfo !== 1,

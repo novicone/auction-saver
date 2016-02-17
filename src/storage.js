@@ -1,6 +1,10 @@
 var q = require("q");
+var Datastore = require("nedb");
+
+var utils = require("./utils");
 
 exports.createSessionStorage = createSessionStorage;
+exports.auctionStorage = createAuctionsStorage;
 
 function createSessionStorage(provideApi) {
     var sessions = { };
@@ -38,3 +42,25 @@ function createSessionStorage(provideApi) {
 function key(obj) {
     return JSON.stringify(obj);
 }
+
+function createAuctionsStorage() {
+    var db = new Datastore({ filename: "auctions.db", autoload: true });
+    
+    var find = q.denodeify(db.find.bind(db));
+    
+    return {
+        save: function(auction) {
+            auction._id = auction.id;
+            
+            return q.denodeify(db.insert.bind(db))(auction);
+        },
+        findOne: function(id) {
+            return find({ id: id })
+                .then(function(auctions) {
+                    return auctions[0];
+                });
+        },
+        findAll: find
+    };
+}
+

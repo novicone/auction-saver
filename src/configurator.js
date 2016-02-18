@@ -24,7 +24,7 @@ exports.create = function createConfigurator(config) {
         }));
         
         router.get("/auctions", wrapHandler(function(req) {
-            return auctionStorage.findAll({ _owner: req.headers.login });
+            return auctionStorage.findAll({ owner: req.headers.login });
         }));
         
         router.post("/auctions", wrapHandler(function(req) {
@@ -42,7 +42,7 @@ function createAuctionIdGetter(findAuction) {
     return function getAuctionId(req) {
         var id = utils.parseAuctionId(req.body.url);
         
-        return findAuction(id)
+        return findAuction({ id: id, owner: req.headers.login })
             .then(function(auction) {
                 if (auction) {
                     throw new Error("Auction " + id + " is already saved");

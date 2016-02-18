@@ -47,19 +47,21 @@ function createAuctionsStorage() {
     var db = new Datastore({ filename: "auctions.db", autoload: true });
     
     var find = q.denodeify(db.find.bind(db));
+    var findOneBy = function(criteria) {
+        return find(criteria)
+            .then(function(auctions) {
+                return auctions[0];
+            });
+    };
     
     return {
         save: function(auction) {
-            auction._id = auction.id;
-            
             return q.denodeify(db.insert.bind(db))(auction);
         },
         findOne: function(id) {
-            return find({ id: id })
-                .then(function(auctions) {
-                    return auctions[0];
-                });
+            return findOneBy({ id: id });
         },
+        findOneBy: findOneBy,
         findAll: find
     };
 }

@@ -13,7 +13,7 @@ function createAuctionSaverFactory(getAuction, storeAuction, generatePath, downl
         return function saveAuction(id) {
             return getAuction(sessionHandle, id)
                 .then(function(auction) {
-                    auction._owner = login;
+                    auction.owner = login;
                     
                     return storeAuction(auction)
                         .then(function() {

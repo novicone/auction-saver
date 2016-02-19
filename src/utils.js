@@ -67,8 +67,12 @@ function getDateString(date) {
     ].join(" ");
 }
 
-var ID_RE = /i(\d+)\.html$/;
+var ID_URL_RE = /i(\d+)\.html/;
+var ID_QUERY_RE = /item=(\d+)&/;
+var ID_RE = /^(\d+)$/;
 
 function parseAuctionId(url) {
-    return ID_RE.exec(url)[1];
+    var result = ID_URL_RE.exec(url) || ID_QUERY_RE.exec(url) || ID_RE.exec(url);
+    
+    return result ? result[1] : null;
 }

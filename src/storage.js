@@ -59,7 +59,7 @@ function createAuctionsStorage() {
             return q.denodeify(db.insert.bind(db))(auction);
         },
         findOne: function(id) {
-            return findOneBy({ id: id });
+            return findOneBy({ _id: id });
         },
         findOneBy: findOneBy,
         findAll: find

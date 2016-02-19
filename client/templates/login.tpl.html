@@ -1,0 +1,11 @@
+<div class="row" ng-controller="LoginCtrl">
+    <div class="span12">
+        <form class="form-inline" ng-submit="login()">
+            <fieldset ng-disabled="authorizing">
+                <input type="text" class="input-small" placeholder="Użytkownik" ng-model="username">
+                <input type="password" class="input-small" placeholder="Hasło" ng-model="password">
+                <input type="submit" class="btn" value="Zaloguj" ng-disabled="authorizing">
+            </fieldset>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+<div class="row" ng-controller="SaverCtrl">
+    <div class="span12">
+        <form ng-submit="save()">
+            <fieldset>
+                <textarea class="span12" rows="8" ng-model="auctions"></textarea>
+            </fieldset>
+            <button type="submit" class="btn">Zapisz</button>
+        </form>
+        <table class="table" ng-if="log.length > 0">
+            <thead>
+                <tr>
+                    <th class="log-auction">Aukcja</th>
+                    <th class="log-status">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="row in log">
+                    <td>{{ row.auction }}</td>
+                    <td>{{ row.failure | status }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

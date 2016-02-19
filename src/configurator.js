@@ -1,3 +1,6 @@
+var q = require("q");
+var express = require("express");
+
 var api = require("./api");
 var utils = require("./utils");
 var auctions = require("./auctions");
@@ -16,18 +19,27 @@ exports.create = function createConfigurator(config) {
     
     var auctionStorage = storage.auctionStorage();
     var createAuctionSaver = auctions.saverFactory(getAuction, auctionStorage.save, generatePath, download);
-    var getAuctionId = createAuctionIdGetter(auctionStorage.findOne);
+    var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
         router.post("/login", wrapHandler(function(req) {
             return login(req.body);
         }));
         
-        router.get("/auctions", wrapHandler(function(req) {
+        var authRouter = express.Router();
+        
+        authRouter.use(function(req, res, next) {
+            if (!req.headers.login || !req.headers.session) {
+                return next({ message: "Forbidden", status: 403 });
+            }
+            next();
+        });
+        
+        authRouter.get("/", wrapHandler(function(req) {
             return auctionStorage.findAll({ owner: req.headers.login });
         }));
         
-        router.post("/auctions", wrapHandler(function(req) {
+        authRouter.post("/", wrapHandler(function(req) {
             var saveAuction = createAuctionSaver(req.headers.session, req.headers.login);
             
             return getAuctionId(req)
@@ -35,6 +47,11 @@ exports.create = function createConfigurator(config) {
                     return saveAuction(id);
                 });
         }));
+        
+        router.use("/auctions", authRouter);
+        router.use(function(err, req, res, next) {
+            res.status(err.status || 500).json(err.message || err);
+        });
     };
 };
 
@@ -42,10 +59,14 @@ function createAuctionIdGetter(findAuction) {
     return function getAuctionId(req) {
         var id = utils.parseAuctionId(req.body.url);
         
+        if (!id) {
+            return q.reject({ message: "WRONG_ID", status: 400 });
+        }
+        
         return findAuction({ id: id, owner: req.headers.login })
             .then(function(auction) {
                 if (auction) {
-                    throw new Error("Auction " + id + " is already saved");
+                    throw { message: "ALREADY_SAVED", status: 406 };
                 }
                 return id;
             });

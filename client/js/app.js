@@ -37,8 +37,7 @@ angular.module("auctionSaver", [])
         return {
             templateUrl: "templates/page.tpl.html",
             scope: {
-                title: "<",
-                template: "<"
+                def: "<"
             },
             replace: true
         };

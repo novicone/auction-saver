@@ -4,7 +4,7 @@
             <fieldset>
                 <textarea class="span12" rows="8" ng-model="auctions"></textarea>
             </fieldset>
-            <button type="submit" class="btn">Zapisz</button>
+            <button type="submit" class="btn" ng-disabled="saving">Zapisz</button>
         </form>
         <table class="table" ng-if="log.length > 0">
             <thead>

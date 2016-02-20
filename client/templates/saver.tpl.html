@@ -1,10 +1,10 @@
 <div class="row" ng-controller="SaverCtrl">
-    <div class="span12">
+    <div class="col-md-12">
         <form ng-submit="save()">
-            <fieldset>
-                <textarea class="span12" rows="8" ng-model="auctions"></textarea>
-            </fieldset>
-            <button type="submit" class="btn" ng-disabled="saving">Zapisz</button>
+            <div class="form-group">
+                <textarea class="form-control" rows="8" ng-model="auctions"></textarea>
+            </div>
+            <button type="submit" class="btn btn-default pull-right" ng-disabled="saving">Zapisz</button>
         </form>
         <table class="table" ng-if="log.length > 0">
             <thead>
@@ -14,7 +14,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="row in log">
+                <tr ng-repeat="row in log" ng-class="{ danger: row.failure }">
                     <td>{{ row.auction }}</td>
                     <td>{{ row.failure | status }}</td>
                 </tr>

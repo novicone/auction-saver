@@ -23,7 +23,7 @@ function createLazyProvider(factory) {
 function createPathGenerator(basePath) {
     return function generatePath(login, auction, imageNumber) {
         var fileName = [
-            auction.price + " zl",
+            Math.round(auction.price) + " zl",
             auction.name,
             "(numer " + auction.id + ")",
             auction.seller,

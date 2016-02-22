@@ -33,6 +33,17 @@ angular.module("auctionSaver", [])
         
         $scope.log = log;
     })
+    .controller("BrowserCtrl", function($scope, $http) {
+        $http.get("/auctions")
+            .then(function(response) {
+                $scope.auctions = response.data;
+            });
+    })
+    .filter("price", function() {
+        return function(value) {
+            return value.toFixed(2) + " zł";
+        };
+    })
     .directive("page", function() {
         return {
             templateUrl: "templates/page.tpl.html",
@@ -54,7 +65,8 @@ angular.module("auctionSaver", [])
         
         var page = {
             login: pageChanger("Zaloguj się", "login"),
-            saver: pageChanger("Zapisuj aukcje", "saver")
+            saver: pageChanger("Zapisuj aukcje", "saver"),
+            browser: pageChanger("Przeglądaj aucje", "browser")
         };
         
         return page;

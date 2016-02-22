@@ -2,9 +2,10 @@
 /* global sha256 */
 /* global btoa */
 angular.module("auctionSaver", [])
-    .controller("AppCtrl", function($scope, page) {
-        $scope.page = page;
-        page.login();
+    .controller("AppCtrl", function($scope) {
+        $scope.$on("authorized", function() {
+            $scope.authorized = true;
+        });
     })
     .controller("LoginCtrl", function($scope, login, page) {
         $scope.login = function() {
@@ -44,34 +45,54 @@ angular.module("auctionSaver", [])
             return value.toFixed(2) + " zł";
         };
     })
-    .directive("page", function() {
+    .directive("login", function(templateUrl) {
         return {
-            templateUrl: "templates/page.tpl.html",
-            scope: {
-                def: "<"
-            },
-            replace: true
+            templateUrl: templateUrl("login")
         };
     })
-    .service("page", function() {
-        function pageChanger(title, template) {
-            return function() {
-                Object.assign(page, {
-                    title: title,
-                    template: "templates/" + template + ".tpl.html"
-                });
+    .directive("page", function(page, templateUrl) {
+        return {
+            templateUrl: templateUrl("page"),
+            scope: { },
+            replace: true,
+            link: function(scope) {
+                Object.assign(scope, page);
+            }
+        };
+    })
+    .service("page", function(templateUrl) {
+        var pages = [
+            page("Zapisuj aukcje", "saver"),
+            page("Przeglądaj aukcje", "browser")
+        ];
+        
+        var current = { };
+        
+        select(pages[0]);
+        
+        function page(title, template) {
+            return {
+                title: title,
+                template: templateUrl(template)
             };
         }
         
-        var page = {
-            login: pageChanger("Zaloguj się", "login"),
-            saver: pageChanger("Zapisuj aukcje", "saver"),
-            browser: pageChanger("Przeglądaj aucje", "browser")
-        };
+        function select(page) {
+            Object.assign(current, page);
+        }
         
-        return page;
+        return {
+            all: pages,
+            current: current,
+            select: select
+        };
     })
-    .service("login", function($http) {
+    .service("templateUrl", function() {
+        return function(template) {
+            return "templates/" + template + ".tpl.html";
+        };
+    })
+    .service("login", function($http, $rootScope) {
         return function login(username, password) {
             var hex = sha256(password);
             var bin = hex
@@ -93,6 +114,7 @@ angular.module("auctionSaver", [])
                         session: response.data,
                         login: username
                     });
+                    $rootScope.$broadcast("authorized");
                 });
         };
     })

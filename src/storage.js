@@ -62,7 +62,10 @@ function createAuctionsStorage() {
             return findOneBy({ _id: id });
         },
         findOneBy: findOneBy,
-        findAll: find
+        findAll: function(criteria) {
+            var cursor = db.find(criteria).sort({ endingTime: -1 });
+            return q.denodeify(cursor.exec.bind(cursor))();
+        }
     };
 }
 

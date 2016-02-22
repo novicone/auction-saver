@@ -5,8 +5,9 @@
                 <tr>
                     <th>ID</th>
                     <th>Nazwa</th>
-                    <th>Cena</th>
+                    <th>Cena</th> 
                     <th>Sprzedawca</th>
+                    <th>Czas zakończenia</th>
                 </tr>
             </thead>
             <tbody>
@@ -15,6 +16,7 @@
                     <td>{{ auction.name }}</td>
                     <td>{{ auction.price | price }}</td>
                     <td>{{ auction.seller }}</td>
+                    <td>{{ auction.endingTime | time }}</td>
                 </tr>
             </tbody>
         </table>

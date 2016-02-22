@@ -7,14 +7,11 @@ angular.module("auctionSaver", [])
             $scope.authorized = true;
         });
     })
-    .controller("LoginCtrl", function($scope, login, page) {
+    .controller("LoginCtrl", function($scope, login) {
         $scope.login = function() {
             $scope.authorizing = true;
             
             login($scope.username, $scope.password)
-                .then(function() {
-                    page.saver();
-                })
                 .finally(function() {
                     $scope.authorizing = false;
                 });
@@ -43,6 +40,11 @@ angular.module("auctionSaver", [])
     .filter("price", function() {
         return function(value) {
             return value.toFixed(2) + " zł";
+        };
+    })
+    .filter("time", function() {
+        return function(timestamp) {
+            return new Date(timestamp * 1000).toLocaleString();
         };
     })
     .directive("login", function(templateUrl) {

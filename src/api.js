@@ -55,6 +55,7 @@ function initializeApi(config) {
 
 function mapInfoToAuction(info) {
     var item = info.itemListInfoExt;
+    var itReservePrice = parseFloat(item.itReservePrice);
     return {
         id: item.itId,
         name: item.itName,
@@ -62,7 +63,8 @@ function mapInfoToAuction(info) {
         seller: item.itSellerLogin,
         endingTime: parseInt(item.itEndingTime, 10),
         finished: item.itEndingInfo !== 1,
-        sold: item.itBidCount > 0 && item.itReservePrice != -1,
+        sold: item.itBidCount > 0 && itReservePrice !== -1,
+        reservePrice: itReservePrice < 0,
         images: info.itemImgList.item
             .filter(function(image) {
                 return image.imageType === 3;

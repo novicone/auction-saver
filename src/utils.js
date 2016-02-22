@@ -22,6 +22,7 @@ function createLazyProvider(factory) {
 
 function createPathGenerator(basePath) {
     return function generatePath(login, auction, imageNumber) {
+        var dirName = auction.sold ? "" : (auction.reservePrice ? "minimalna" : "niesprzedane");
         var fileName = [
             Math.round(auction.price) + " zl",
             auction.name,
@@ -32,7 +33,7 @@ function createPathGenerator(basePath) {
         if (auction.images.length > 1) {
             fileName += " foto_" + imageNumber;
         }
-        return path.join(basePath, login, sanitize(fileName + ".jpg"));
+        return path.join(basePath, login, dirName, sanitize(fileName + ".jpg"));
     };
 }
 
@@ -68,7 +69,7 @@ function getDateString(date) {
 }
 
 var ID_URL_RE = /i(\d+)\.html/;
-var ID_QUERY_RE = /item=(\d+)&/;
+var ID_QUERY_RE = /item=(\d+)(&|$)/;
 var ID_RE = /^(\d+)$/;
 
 function parseAuctionId(url) {

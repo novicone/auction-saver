@@ -1,0 +1,22 @@
+<div class="row" ng-controller="BrowserCtrl">
+    <div class="col-md-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nazwa</th>
+                    <th>Cena</th>
+                    <th>Sprzedawca</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="auction in auctions">
+                    <td>{{ auction.id }}</td>
+                    <td>{{ auction.name }}</td>
+                    <td>{{ auction.price | price }}</td>
+                    <td>{{ auction.seller }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

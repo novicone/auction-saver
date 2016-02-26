@@ -10,6 +10,7 @@
     "express": "^4.13.4",
     "nedb": "^1.8.0",
     "q": "^1.4.1",
-    "sanitize-filename": "^1.5.3"
+    "sanitize-filename": "^1.5.3",
+    "soap": "^0.13.0"
   }
 }

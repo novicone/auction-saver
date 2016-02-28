@@ -16,7 +16,7 @@
             <tbody>
                 <tr ng-repeat="row in log" ng-class="{ danger: row.failure }">
                     <td>{{ row.auction }}</td>
-                    <td>{{ row.failure | status }}</td>
+                    <td>{{ row | status }}</td>
                 </tr>
             </tbody>
         </table>

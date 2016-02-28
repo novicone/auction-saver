@@ -2,7 +2,7 @@ var q = require("q");
 
 exports.saverFactory = createAuctionSaverFactory;
 
-function createAuctionSaverFactory(getAuction, storeAuction, generatePath, download) {
+function createAuctionSaverFactory(fetchAuction, storeAuction, generatePath, download) {
     return function createAuctionSaver(sessionHandle, login) {
         function saveImages(auction) {
             return q.all(auction.images.map(function(imageUrl, i) {
@@ -11,13 +11,20 @@ function createAuctionSaverFactory(getAuction, storeAuction, generatePath, downl
         }
         
         return function saveAuction(id) {
-            return getAuction(sessionHandle, id)
+            return fetchAuction(sessionHandle, id)
                 .then(function(auction) {
                     auction.owner = login;
                     
-                    return storeAuction(auction)
+                    var storePromise = auction.finished
+                        ? storeAuction(auction)
+                            .then(function() {
+                                saveImages(auction);
+                            })
+                        : storeAuction(auction);
+
+                    return storePromise
                         .then(function() {
-                            saveImages(auction);
+                            return auction;
                         });
                 });
         };

@@ -127,9 +127,10 @@ angular.module("auctionSaver", [])
             return $http.post("/auctions", {
                     url: auction
                 })
-                .then(function() {
+                .then(function(result) {
                     log.unshift({
-                        auction: auction
+                        auction: auction,
+                        result: result
                     });
                 })
                 .catch(function(failure) {
@@ -160,7 +161,13 @@ angular.module("auctionSaver", [])
             ALREADY_SAVED: "Aukcja jest już zapisana"
         };
 
-        return function(status) {
-            return status ? (map[status] || status) : "OK";
+        return function(entry) {
+            var failure = entry.failure;
+            var result = entry.result
+            return failure
+                ? map[failure] || failure
+                : result && !result.finished
+                    ? "Niezakończona"
+                    : "OK";
         };
     });

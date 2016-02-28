@@ -39,7 +39,7 @@ function initializeApi(config) {
                             return info.sessionHandlePart;
                         });
                 },
-                getAuction: function(sessionHandle, id) {
+                fetchAuction: function(sessionHandle, id) {
                     var params = {
                         sessionHandle: sessionHandle,
                         itemId: id,

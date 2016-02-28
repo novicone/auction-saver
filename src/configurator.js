@@ -15,10 +15,10 @@ exports.create = function createConfigurator(config) {
     var generatePath = utils.createPathGenerator("images");
     
     var login = api.method(provideApi, "login");
-    var getAuction = api.method(provideApi, "getAuction");
+    var fetchAuction = api.method(provideApi, "fetchAuction");
     
     var auctionStorage = storage.auctionStorage();
-    var createAuctionSaver = auctions.saverFactory(getAuction, auctionStorage.save, generatePath, download);
+    var createAuctionSaver = auctions.saverFactory(fetchAuction, auctionStorage.save, generatePath, download);
     var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
@@ -26,20 +26,20 @@ exports.create = function createConfigurator(config) {
             return login(req.body);
         }));
         
-        var authRouter = express.Router();
+        var auctionsRouter = express.Router();
         
-        authRouter.use(function(req, res, next) {
+        auctionsRouter.use(function(req, res, next) {
             if (!req.headers.login || !req.headers.session) {
                 return next({ message: "Forbidden", status: 403 });
             }
             next();
         });
         
-        authRouter.get("/", wrapHandler(function(req) {
+        auctionsRouter.get("/", wrapHandler(function(req) {
             return auctionStorage.findAll({ owner: req.headers.login });
         }));
-        
-        authRouter.post("/", wrapHandler(function(req) {
+
+        auctionsRouter.post("/", wrapHandler(function(req) {
             var saveAuction = createAuctionSaver(req.headers.session, req.headers.login);
             
             return getAuctionId(req)
@@ -48,9 +48,10 @@ exports.create = function createConfigurator(config) {
                 });
         }));
         
-        router.use("/auctions", authRouter);
+        router.use("/auctions", auctionsRouter);
         router.use(function(err, req, res, next) {
-            res.status(err.status || 500).json(err.message || err);
+            res.status(err.status || 500)
+                .json(err.message || err);
         });
     };
 };
@@ -65,7 +66,7 @@ function createAuctionIdGetter(findAuction) {
         
         return findAuction({ id: id, owner: req.headers.login })
             .then(function(auction) {
-                if (auction) {
+                if (auction && auction.finished) {
                     throw { message: "ALREADY_SAVED", status: 406 };
                 }
                 return id;

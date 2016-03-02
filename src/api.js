@@ -5,36 +5,36 @@ exports.initialize = initializeApi;
 exports.method = createApiMethod;
 
 function initializeApi(config) {
-    var client;
-    
-    function call(name, params) {
-        console.log(name, params);
-        return q.denodeify(client[name])(params)
-            .then(function(results) {
-                return results[0];
-            });
+    var call;
+
+    function querySysStatus() {
+        return call("doQuerySysStatus", {
+            sysvar: 1,
+            countryId: 1,
+            webapiKey: config.key
+        });
+    }
+
+    function loginEnc(credentials, verKey) {
+        return call("doLoginEnc", {
+            userLogin: credentials.login,
+            userHashPassword: credentials.password,
+            countryCode: 1,
+            webapiKey: config.key,
+            localVersion: verKey
+        });
     }
     
     return q.denodeify(soap.createClient)(config.wsdl)
-        .then(function (value) {
-            client = value;
-            return call("doQuerySysStatus", {
-                sysvar: 1,
-                countryId: 1,
-                webapiKey: config.key
-            });
-        })
-        .then(function(status) {
+        .then(function (client) {
+            call = caller(client);
+
             return {
                 login: function(credentials) {
-                    var params = {
-                        userLogin: credentials.login,
-                        userHashPassword: credentials.password,
-                        countryCode: 1,
-                        webapiKey: config.key,
-                        localVersion: status.verKey
-                    };
-                    return call("doLoginEnc", params)
+                    return querySysStatus()
+                        .then(function(status) {
+                            return loginEnc(credentials, status.verKey);
+                        }) 
                         .then(function(info) {
                             return info.sessionHandlePart;
                         });
@@ -81,6 +81,16 @@ function createApiMethod(provideApi, name) {
         return provideApi()
             .then(function(api) {
                 return api[name].apply(api, args);
+            });
+    };
+}
+
+function caller(client) {
+    return function call(name, params) {
+        console.log(name, params);
+        return q.denodeify(client[name])(params)
+            .then(function(results) {
+                return results[0];
             });
     };
 }

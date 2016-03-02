@@ -46,7 +46,9 @@ function key(obj) {
 function createAuctionsStorage() {
     var db = new Datastore({ filename: "auctions.db", autoload: true });
     
-    var find = q.denodeify(db.find.bind(db));
+    var find = q.nbind(db.find, db);
+    var update = q.nbind(db.update, db);
+    var insert = q.nbind(db.insert, db);
     var findOneBy = function(criteria) {
         return find(criteria)
             .then(function(auctions) {
@@ -56,7 +58,14 @@ function createAuctionsStorage() {
     
     return {
         save: function(auction) {
-            return q.denodeify(db.insert.bind(db))(auction);
+            return findOneBy({ id: auction.id, owner: auction.owner })
+                .then(function(saved) {
+                    if (saved) {
+                        return update({ _id: saved._id }, auction, { });
+                    } else {
+                        return insert(auction);
+                    }
+                });
         },
         findOne: function(id) {
             return findOneBy({ _id: id });
@@ -64,7 +73,7 @@ function createAuctionsStorage() {
         findOneBy: findOneBy,
         findAll: function(owner) {
             var cursor = db.find({ owner: owner }).sort({ endingTime: -1 });
-            return q.denodeify(cursor.exec.bind(cursor))();
+            return q.nbind(cursor.exec, cursor)();
         }
     };
 }

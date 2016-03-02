@@ -19,7 +19,7 @@ exports.create = function createConfigurator(config) {
     
     var auctionStorage = storage.auctionStorage();
     var createAuctionSaver = auctions.saverFactory(fetchAuction, auctionStorage.save, generatePath, download);
-    var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy);
+    var auctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
         router.post("/login", wrapHandler(function(req) {
@@ -39,14 +39,8 @@ exports.create = function createConfigurator(config) {
             return auctionStorage.findAll({ owner: req.headers.login });
         }));
 
-        auctionsRouter.post("/", wrapHandler(function(req) {
-            var saveAuction = createAuctionSaver(req.headers.session, req.headers.login);
-            
-            return getAuctionId(req)
-                .then(function(id) {
-                    return saveAuction(id);
-                });
-        }));
+        auctionsRouter
+            .post("/", json(call, action(createAuctionSaver, session, loginParam), auctionId));
         
         router.use("/auctions", auctionsRouter);
         router.use(function(err, req, res, next) {
@@ -55,6 +49,43 @@ exports.create = function createConfigurator(config) {
         });
     };
 };
+
+function action(fn) {
+    var args = [].slice.call(arguments, 1);
+    return function(req, res, next) {
+        console.log(args);
+        return q.all(args.map(function(arg) { return arg(req); }))
+            .then(function(params) {
+                return fn.apply(null, params);
+            })
+            .catch(function(cause) {
+                next(cause);
+                throw cause;
+            });
+    };
+}
+
+function json() {
+    var args = arguments;
+    return function(req, res, next) {
+        action.apply(null, args)(req, res, next)
+            .then(function(result) { res.json(result); });
+    }
+}
+
+function call(fn) {
+    var params = [].slice.call(arguments, 1);
+    console.log(fn, params);
+    return fn.apply(null, params);
+}
+
+function session(req) {
+    return req.headers.session;
+}
+
+function loginParam(req) {
+    return req.headers.login;
+}
 
 function createAuctionIdGetter(findAuction) {
     return function getAuctionId(req) {

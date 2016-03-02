@@ -48,7 +48,6 @@ function createAuctionsStorage() {
     
     var find = q.nbind(db.find, db);
     var update = q.nbind(db.update, db);
-    var insert = q.nbind(db.insert, db);
     var findOneBy = function(criteria) {
         return find(criteria)
             .then(function(auctions) {
@@ -58,14 +57,7 @@ function createAuctionsStorage() {
     
     return {
         save: function(auction) {
-            return findOneBy({ id: auction.id, owner: auction.owner })
-                .then(function(saved) {
-                    if (saved) {
-                        return update({ _id: saved._id }, auction, { });
-                    } else {
-                        return insert(auction);
-                    }
-                });
+            return update({ id: auction.id, owner: auction.owner }, auction, { upsert: true });
         },
         findOne: function(id) {
             return findOneBy({ _id: id });

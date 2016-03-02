@@ -20,13 +20,13 @@ function createSessionStorage(provideApi) {
             return promises[sessionKey];
         }
         
-        return promises[sessionKey] = provideApi()
+        return (promises[sessionKey] = provideApi()
             .then(function(api) {
                 return api.login(credentials);
             })
             .then(function(session) {
-                return sessions[sessionKey] = session;
-            });
+                return (sessions[sessionKey] = session);
+            }));
     }
     
     return {
@@ -62,8 +62,8 @@ function createAuctionsStorage() {
             return findOneBy({ _id: id });
         },
         findOneBy: findOneBy,
-        findAll: function(criteria) {
-            var cursor = db.find(criteria).sort({ endingTime: -1 });
+        findAll: function(owner) {
+            var cursor = db.find({ owner: owner }).sort({ endingTime: -1 });
             return q.denodeify(cursor.exec.bind(cursor))();
         }
     };

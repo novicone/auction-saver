@@ -22,28 +22,22 @@ exports.create = function createConfigurator(config) {
     var auctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
-        router.post("/login", wrapHandler(function(req) {
-            return login(req.body);
-        }));
+        router.post("/login", json(login, body));
         
         var auctionsRouter = express.Router();
         
-        auctionsRouter.use(function(req, res, next) {
-            if (!req.headers.login || !req.headers.session) {
-                return next({ message: "Forbidden", status: 403 });
-            }
-            next();
-        });
+        auctionsRouter.use(filterUnauthorized);
         
-        auctionsRouter.get("/", wrapHandler(function(req) {
-            return auctionStorage.findAll({ owner: req.headers.login });
-        }));
+        auctionsRouter.get("/", json(auctionStorage.findAll, loginParam));
 
-        auctionsRouter
-            .post("/", json(call, action(createAuctionSaver, session, loginParam), auctionId));
+        var validAuctionId = action(auctionId, urlParam, loginParam);
+        var saveAuction = action(createAuctionSaver, sessionParam, loginParam);
+        auctionsRouter.post("/", json(call, saveAuction, validAuctionId));
         
         router.use("/auctions", auctionsRouter);
         router.use(function(err, req, res, next) {
+            console.error(err.stack || err);
+
             res.status(err.status || 500)
                 .json(err.message || err);
         });
@@ -53,10 +47,9 @@ exports.create = function createConfigurator(config) {
 function action(fn) {
     var args = [].slice.call(arguments, 1);
     return function(req, res, next) {
-        console.log(args);
-        return q.all(args.map(function(arg) { return arg(req); }))
+        return q.all(args.map(function(arg) { return arg(req, res, next); }))
             .then(function(params) {
-                return fn.apply(null, params);
+                return q.fapply(fn, params);
             })
             .catch(function(cause) {
                 next(cause);
@@ -70,16 +63,15 @@ function json() {
     return function(req, res, next) {
         action.apply(null, args)(req, res, next)
             .then(function(result) { res.json(result); });
-    }
+    };
 }
 
 function call(fn) {
     var params = [].slice.call(arguments, 1);
-    console.log(fn, params);
     return fn.apply(null, params);
 }
 
-function session(req) {
+function sessionParam(req) {
     return req.headers.session;
 }
 
@@ -87,34 +79,35 @@ function loginParam(req) {
     return req.headers.login;
 }
 
+function urlParam(req) {
+    return req.body.url;
+}
+
+function body(req) {
+    return req.body;
+}
+
+function filterUnauthorized(req, res, next) {
+    if (!loginParam(req) || !sessionParam(req)) {
+        return next({ message: "Forbidden", status: 403 });
+    }
+    next();
+}
+
 function createAuctionIdGetter(findAuction) {
-    return function getAuctionId(req) {
-        var id = utils.parseAuctionId(req.body.url);
+    return function getAuctionId(url, login) {
+        var id = utils.parseAuctionId(url);
         
         if (!id) {
-            return q.reject({ message: "WRONG_ID", status: 400 });
+            throw { message: "WRONG_ID", status: 400 };
         }
         
-        return findAuction({ id: id, owner: req.headers.login })
+        return findAuction({ id: id, owner: login })
             .then(function(auction) {
                 if (auction && auction.finished) {
                     throw { message: "ALREADY_SAVED", status: 406 };
                 }
                 return id;
             });
-    };
-}
-
-function wrapHandler(handler) {
-    return function handle(req, res, next) {
-        handler(req)
-            .then(function(result) {
-                if (result === null || result === undefined) {
-                    res.status(204).end();
-                } else {
-                    res.json(result);
-                }
-            })
-            .catch(next);
     };
 }

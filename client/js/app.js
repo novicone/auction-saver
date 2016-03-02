@@ -127,10 +127,10 @@ angular.module("auctionSaver", [])
             return $http.post("/auctions", {
                     url: auction
                 })
-                .then(function(result) {
+                .then(function(response) {
                     log.unshift({
                         auction: auction,
-                        result: result
+                        result: response.data
                     });
                 })
                 .catch(function(failure) {
@@ -163,7 +163,7 @@ angular.module("auctionSaver", [])
 
         return function(entry) {
             var failure = entry.failure;
-            var result = entry.result
+            var result = entry.result;
             return failure
                 ? map[failure] || failure
                 : result && !result.finished

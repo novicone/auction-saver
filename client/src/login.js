@@ -36,8 +36,8 @@ module.exports = angular.module("login", [])
                 });
         };
     })
-    .directive("login", function(templateUrl) {
+    .directive("login", function() {
         return {
-            templateUrl: templateUrl("login")
+            template: require("./login.tpl.html")
         };
     });

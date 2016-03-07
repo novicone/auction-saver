@@ -38,7 +38,8 @@ function SaverCtrl($scope, save, log) {
 }
 
 function saveFactory($q, $http, log) {
-    var WS_RE = /^\s*$/;
+    var NEWLINE_RE = /\r\n?/g;
+    var WHITESPACE_RE = /^\s*$/;
 
     function saveAuction(auction) {
         return $http.post("/auctions", {
@@ -60,10 +61,10 @@ function saveFactory($q, $http, log) {
 
     return function save(auctionsText) {
         var auctions = auctionsText
-            .replace(/\r\n?/g, "\n")
+            .replace(NEWLINE_RE, "\n")
             .split("\n")
             .filter(function(auction) {
-                return !WS_RE.test(auction);
+                return !WHITESPACE_RE.test(auction);
             });
 
         return $q.all(auctions.map(saveAuction));

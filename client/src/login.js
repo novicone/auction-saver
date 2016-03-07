@@ -13,6 +13,10 @@ function LoginCtrl($scope, login) {
         $scope.authorizing = true;
         
         login($scope.username, $scope.password)
+            .catch(function(error) {
+                alert(error.data);
+                throw error;
+            })
             .finally(function() {
                 $scope.authorizing = false;
             });

@@ -1,7 +1,9 @@
 /* global angular */
-/* global sha256 */
-/* global btoa */
-angular.module("auctionSaver", [])
+angular.module("auctionSaver", [
+        require("./login").name,
+        require("./saver").name,
+        require("./browser").name
+    ])
     .controller("AppCtrl", function($scope) {
         $scope.$on("authorized", function() {
             $scope.authorized = true;
@@ -47,132 +49,5 @@ angular.module("auctionSaver", [])
             link: function(scope) {
                 Object.assign(scope, page);
             }
-        };
-    })
-
-    .controller("LoginCtrl", function($scope, login) {
-        $scope.login = function() {
-            $scope.authorizing = true;
-            
-            login($scope.username, $scope.password)
-                .finally(function() {
-                    $scope.authorizing = false;
-                });
-        };
-    })
-    .service("login", function($http, $rootScope) {
-        return function login(username, password) {
-            var hex = sha256(password);
-            var bin = hex
-                .match(/\w{2}/g)
-                .map(function(char) {
-                    return String.fromCharCode(parseInt(char, 16));
-                })
-                .join("");
-            var based = btoa(bin);
-
-            var credentials = {
-                login: username,
-                password: based
-            };
-
-            return $http.post("/login", credentials)
-                .then(function(response) {
-                    Object.assign($http.defaults.headers.common, {
-                        session: response.data,
-                        login: username
-                    });
-                    $rootScope.$broadcast("authorized");
-                });
-        };
-    })
-    .directive("login", function(templateUrl) {
-        return {
-            templateUrl: templateUrl("login")
-        };
-    })
-
-    .controller("SaverCtrl", function($scope, save, log) {
-        $scope.save = function() {
-            $scope.saving = true;
-            
-            save($scope.auctions)
-                .then(function() {
-                    $scope.saving = false;
-                });
-            
-            $scope.auctions = "";
-        };
-        
-        $scope.log = log;
-    })
-    .service("save", function($q, $http, log) {
-        var WS_RE = /^\s*$/;
-
-        function saveAuction(auction) {
-            return $http.post("/auctions", {
-                    url: auction
-                })
-                .then(function(response) {
-                    log.unshift({
-                        auction: auction,
-                        result: response.data
-                    });
-                })
-                .catch(function(failure) {
-                    log.unshift({
-                        auction: auction,
-                        failure: failure.data
-                    });
-                });
-        }
-
-        return function save(auctionsText) {
-            var auctions = auctionsText
-                .replace(/\r\n?/g, "\n")
-                .split("\n")
-                .filter(function(auction) {
-                    return !WS_RE.test(auction);
-                });
-
-            return $q.all(auctions.map(saveAuction));
-        };
-    })
-    .service("log", function() {
-        return [];
-    })
-    .filter("status", function() {
-        var map = {
-            WRONG_ID: "Nierozpoznawany identyfikator",
-            ALREADY_SAVED: "Aukcja jest już zapisana"
-        };
-
-        return function(entry) {
-            var failure = entry.failure;
-            var result = entry.result;
-            return failure
-                ? map[failure] || failure
-                : result && !result.finished
-                    ? "Niezakończona"
-                    : "OK";
-        };
-    })
-
-    .controller("BrowserCtrl", function($scope, $http) {
-        $http.get("/auctions")
-            .then(function(response) {
-                $scope.auctions = response.data;
-            });
-    })
-    .filter("price", function() {
-        return function(value) {
-            return value.toFixed(2) + " zł";
-        };
-    })
-    .filter("time", function() {
-        return function(timestamp) {
-            return timestamp
-                ? new Date(timestamp * 1000).toLocaleString()
-                : "-";
         };
     });

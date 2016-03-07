@@ -5,6 +5,12 @@
   "main": "server.js",
   "repository": "",
   "author": "novic",
+  "scripts": {
+    "clean": "rm -r build",
+    "copy": "mkdir build && cp -r client/assets/* build && cp -r client/vendors/* build",
+    "build": "browserify client/src/app.js -o build/js/app.js",
+    "start": "npm run clean && npm run copy && npm run build && node server.js"
+  },
   "dependencies": {
     "body-parser": "^1.15.0",
     "express": "^4.13.4",
@@ -12,5 +18,8 @@
     "q": "^1.4.1",
     "sanitize-filename": "^1.5.3",
     "soap": "^0.13.0"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.0"
   }
 }

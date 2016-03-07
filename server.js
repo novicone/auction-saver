@@ -1,6 +1,6 @@
-var path = require('path');
+var path = require("path");
 
-var express = require('express');
+var express = require("express");
 var bodyParser = require("body-parser");
 
 var configurator = require("./src/configurator");
@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 var configure = configurator.create(require("./config"));
 configure(app);
 
-app.use(express.static(path.resolve(__dirname, 'client')));
+app.use(express.static(path.resolve(__dirname, "build")));
 
 var address = process.env.IP || "0.0.0.0";
 var port = process.env.PORT || 3000;

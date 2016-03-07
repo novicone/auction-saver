@@ -31,8 +31,8 @@ exports.create = function createConfigurator(config) {
         auctionsRouter.get("/", json(auctionStorage.findAll, loginParam));
 
         var validAuctionId = action(auctionId, urlParam, loginParam);
-        var saveAuction = action(createAuctionSaver, sessionParam, loginParam);
-        auctionsRouter.post("/", json(call, saveAuction, validAuctionId));
+        var auctionSaver = action(createAuctionSaver, sessionParam, loginParam);
+        auctionsRouter.post("/", json(call, auctionSaver, validAuctionId));
         
         router.use("/auctions", auctionsRouter);
         router.use(function(err, req, res, next) {

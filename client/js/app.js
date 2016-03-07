@@ -44,7 +44,9 @@ angular.module("auctionSaver", [])
     })
     .filter("time", function() {
         return function(timestamp) {
-            return new Date(timestamp * 1000).toLocaleString();
+            return timestamp
+                ? new Date(timestamp * 1000).toLocaleString()
+                : "-";
         };
     })
     .directive("login", function(templateUrl) {

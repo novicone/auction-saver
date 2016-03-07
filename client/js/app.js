@@ -7,61 +7,9 @@ angular.module("auctionSaver", [])
             $scope.authorized = true;
         });
     })
-    .controller("LoginCtrl", function($scope, login) {
-        $scope.login = function() {
-            $scope.authorizing = true;
-            
-            login($scope.username, $scope.password)
-                .finally(function() {
-                    $scope.authorizing = false;
-                });
-        };
-    })
-    .controller("SaverCtrl", function($scope, save, log) {
-        $scope.save = function() {
-            $scope.saving = true;
-            
-            save($scope.auctions)
-                .then(function() {
-                    $scope.saving = false;
-                });
-            
-            $scope.auctions = "";
-        };
-        
-        $scope.log = log;
-    })
-    .controller("BrowserCtrl", function($scope, $http) {
-        $http.get("/auctions")
-            .then(function(response) {
-                $scope.auctions = response.data;
-            });
-    })
-    .filter("price", function() {
-        return function(value) {
-            return value.toFixed(2) + " zł";
-        };
-    })
-    .filter("time", function() {
-        return function(timestamp) {
-            return timestamp
-                ? new Date(timestamp * 1000).toLocaleString()
-                : "-";
-        };
-    })
-    .directive("login", function(templateUrl) {
-        return {
-            templateUrl: templateUrl("login")
-        };
-    })
-    .directive("page", function(page, templateUrl) {
-        return {
-            templateUrl: templateUrl("page"),
-            scope: { },
-            replace: true,
-            link: function(scope) {
-                Object.assign(scope, page);
-            }
+    .service("templateUrl", function() {
+        return function(template) {
+            return "templates/" + template + ".tpl.html";
         };
     })
     .service("page", function(templateUrl) {
@@ -91,9 +39,25 @@ angular.module("auctionSaver", [])
             select: select
         };
     })
-    .service("templateUrl", function() {
-        return function(template) {
-            return "templates/" + template + ".tpl.html";
+    .directive("page", function(page, templateUrl) {
+        return {
+            templateUrl: templateUrl("page"),
+            scope: { },
+            replace: true,
+            link: function(scope) {
+                Object.assign(scope, page);
+            }
+        };
+    })
+
+    .controller("LoginCtrl", function($scope, login) {
+        $scope.login = function() {
+            $scope.authorizing = true;
+            
+            login($scope.username, $scope.password)
+                .finally(function() {
+                    $scope.authorizing = false;
+                });
         };
     })
     .service("login", function($http, $rootScope) {
@@ -121,6 +85,26 @@ angular.module("auctionSaver", [])
                     $rootScope.$broadcast("authorized");
                 });
         };
+    })
+    .directive("login", function(templateUrl) {
+        return {
+            templateUrl: templateUrl("login")
+        };
+    })
+
+    .controller("SaverCtrl", function($scope, save, log) {
+        $scope.save = function() {
+            $scope.saving = true;
+            
+            save($scope.auctions)
+                .then(function() {
+                    $scope.saving = false;
+                });
+            
+            $scope.auctions = "";
+        };
+        
+        $scope.log = log;
     })
     .service("save", function($q, $http, log) {
         var WS_RE = /^\s*$/;
@@ -171,5 +155,24 @@ angular.module("auctionSaver", [])
                 : result && !result.finished
                     ? "Niezakończona"
                     : "OK";
+        };
+    })
+
+    .controller("BrowserCtrl", function($scope, $http) {
+        $http.get("/auctions")
+            .then(function(response) {
+                $scope.auctions = response.data;
+            });
+    })
+    .filter("price", function() {
+        return function(value) {
+            return value.toFixed(2) + " zł";
+        };
+    })
+    .filter("time", function() {
+        return function(timestamp) {
+            return timestamp
+                ? new Date(timestamp * 1000).toLocaleString()
+                : "-";
         };
     });

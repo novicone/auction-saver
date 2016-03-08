@@ -32,9 +32,15 @@ function SaverCtrl($scope, save, fetchAuctions, log) {
 
     $scope.insertUnfinished = function() {
         fetchAuctions({ finished: false })
-            .then(auctions => auctions.map(auction => auction.id))
-            .then(ids => ids.join("\n"))
-            .then(text => { $scope.auctions = text; });
+            .then(auctions => {
+                $scope.auctions = auctions
+                    .map(auction => auction.id)
+                    .join("\n");
+            });
+    };
+
+    $scope.clearLog = function() {
+        log.length = 0;
     };
     
     $scope.log = log;

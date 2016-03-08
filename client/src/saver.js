@@ -1,7 +1,7 @@
-/* global angular */
-/* global sha256 */
-/* global btoa */
-module.exports = angular.module("saver", [])
+/* jshint esnext: true */
+module.exports = angular.module("saver", [
+        require("./auctions").name
+    ])
     .controller("SaverCtrl", SaverCtrl)
     .service("save", saveFactory)
     .value("log", [])
@@ -11,9 +11,7 @@ module.exports = angular.module("saver", [])
             ALREADY_SAVED: "Aukcja jest już zapisana"
         };
 
-        return function(entry) {
-            var failure = entry.failure;
-            var result = entry.result;
+        return function({ failure, result }) {
             return failure
                 ? map[failure] || failure
                 : result && !result.finished
@@ -22,50 +20,45 @@ module.exports = angular.module("saver", [])
         };
     });
 
-function SaverCtrl($scope, save, log) {
+function SaverCtrl($scope, save, fetchAuctions, log) {
     $scope.save = function() {
         $scope.saving = true;
         
         save($scope.auctions)
-            .then(function() {
-                $scope.saving = false;
-            });
+            .then(() => { $scope.saving = false; });
         
         $scope.auctions = "";
+    };
+
+    $scope.insertUnfinished = function() {
+        fetchAuctions({ finished: false })
+            .then(auctions => auctions.map(auction => auction.id))
+            .then(ids => ids.join("\n"))
+            .then(text => { $scope.auctions = text; });
     };
     
     $scope.log = log;
 }
 
 function saveFactory($q, $http, log) {
-    var NEWLINE_RE = /\r\n?/g;
-    var WHITESPACE_RE = /^\s*$/;
+    const NEWLINE_RE = /\r\n?/g;
+    const WHITESPACE_RE = /^\s*$/;
 
     function saveAuction(auction) {
-        return $http.post("/auctions", {
-                url: auction
-            })
-            .then(function(response) {
-                log.unshift({
-                    auction: auction,
-                    result: response.data
-                });
-            })
-            .catch(function(failure) {
-                log.unshift({
-                    auction: auction,
-                    failure: failure.data
-                });
-            });
+        function append(obj) {
+            log.unshift(Object.assign({ auction }, obj));
+        }
+
+        return $http.post("/auctions", { url: auction })
+            .then(({ data }) => append({ result: data }))
+            .catch(({ data }) => append({ failure: data }));
     }
 
     return function save(auctionsText) {
         var auctions = auctionsText
             .replace(NEWLINE_RE, "\n")
             .split("\n")
-            .filter(function(auction) {
-                return !WHITESPACE_RE.test(auction);
-            });
+            .filter(auction => !WHITESPACE_RE.test(auction));
 
         return $q.all(auctions.map(saveAuction));
     };

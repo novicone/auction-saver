@@ -1,4 +1,5 @@
-/* global angular */
+/* global sha256 */
+/* global btoa */
 module.exports = angular.module("login", [])
     .service("login", loginFactory)
     .directive("login", function() {

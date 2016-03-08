@@ -1,0 +1,10 @@
+{
+    "browserify": true,
+    "browser": true,
+    "undef": true,
+    "unused": true,
+    "laxbreak": true,
+    "globals": {
+        "angular": true
+    }
+}

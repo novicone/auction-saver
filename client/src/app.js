@@ -1,4 +1,3 @@
-/* global angular */
 angular.module("auctionSaver", [
         require("./login").name,
         require("./saver").name,

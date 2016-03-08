@@ -63,8 +63,11 @@ function createAuctionsStorage() {
             return findOneBy({ _id: id });
         },
         findOneBy: findOneBy,
-        findAll: function(owner) {
-            var cursor = db.find({ owner: owner }).sort({ endingTime: -1 });
+        findAll: function(owner, query) {
+            var cursor = db
+                .find(Object.assign({ owner: owner }, query))
+                .sort({ endingTime: -1 });
+            
             return q.nbind(cursor.exec, cursor)();
         }
     };

@@ -28,7 +28,7 @@ exports.create = function createConfigurator(config) {
         
         auctionsRouter.use(filterUnauthorized);
         
-        auctionsRouter.get("/", json(auctionStorage.findAll, loginParam));
+        auctionsRouter.get("/", json(auctionStorage.findAll, loginParam, auctionsQuery));
 
         var validAuctionId = action(auctionId, urlParam, loginParam);
         var auctionSaver = action(createAuctionSaver, sessionParam, loginParam);
@@ -85,6 +85,15 @@ function urlParam(req) {
 
 function body(req) {
     return req.body;
+}
+
+function auctionsQuery(req) {
+    var query = { };
+    if (req.query.hasOwnProperty("finished")) {
+        query.finished = req.query.finished === "true";
+    }
+
+    return query;
 }
 
 function filterUnauthorized(req, res, next) {

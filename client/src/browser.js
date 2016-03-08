@@ -1,9 +1,10 @@
-/* global angular */
-module.exports = angular.module("browser", [])
-    .controller("BrowserCtrl", function($scope, $http) {
-        $http.get("/auctions")
-            .then(function(response) {
-                $scope.auctions = response.data;
+module.exports = angular.module("browser", [
+        require("./auctions").name
+    ])
+    .controller("BrowserCtrl", function($scope, fetchAuctions) {
+        fetchAuctions()
+            .then(function(auctions) {
+                $scope.auctions = auctions;
             });
     })
     .filter("price", function() {

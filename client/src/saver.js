@@ -4,7 +4,7 @@ module.exports = angular.module("saver", [
     ])
     .controller("SaverCtrl", SaverCtrl)
     .service("save", saveFactory)
-    .value("log", [])
+    .service("log", logFactory)
     .filter("status", function() {
         var map = {
             WRONG_ID: "Nierozpoznawany identyfikator",
@@ -39,11 +39,9 @@ function SaverCtrl($scope, save, fetchAuctions, log) {
             });
     };
 
-    $scope.clearLog = function() {
-        log.length = 0;
-    };
+    $scope.clearLog = log.clear;
     
-    $scope.log = log;
+    $scope.log = log.entries;
 }
 
 function saveFactory($q, $http, log) {
@@ -51,13 +49,9 @@ function saveFactory($q, $http, log) {
     const WHITESPACE_RE = /^\s*$/;
 
     function saveAuction(auction) {
-        function append(obj) {
-            log.unshift(Object.assign({ auction }, obj));
-        }
-
         return $http.post("/auctions", { url: auction })
-            .then(({ data }) => append({ result: data }))
-            .catch(({ data }) => append({ failure: data }));
+            .then(({ data }) => log.append({ auction, result: data }))
+            .catch(({ data }) => log.append({ auction, failure: data }));
     }
 
     return function save(auctionsText) {
@@ -67,5 +61,18 @@ function saveFactory($q, $http, log) {
             .filter(auction => !WHITESPACE_RE.test(auction));
 
         return $q.all(auctions.map(saveAuction));
+    };
+}
+
+function logFactory() {
+    const entries = [];
+    return {
+        entries,
+        append(obj) {
+            entries.unshift(obj);
+        },
+        clear() {
+            entries.length = 0;
+        }
     };
 }

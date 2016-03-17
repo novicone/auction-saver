@@ -6,7 +6,7 @@
   "repository": "",
   "author": "novic",
   "scripts": {
-    "clean": "rm -r build",
+    "clean": "rm -rf build",
     "copy": "mkdir build && cp -r client/assets/* build && cp -r client/vendors/* build",
     "build": "browserify client/src/app.js -o build/js/app.js",
     "start": "npm run clean && npm run copy && npm run build && node server.js"

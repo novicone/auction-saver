@@ -18,8 +18,10 @@ exports.create = function createConfigurator(config) {
     var fetchAuction = api.method(provideApi, "fetchAuction");
     
     var auctionStorage = storage.auctionStorage();
-    var createAuctionSaver = auctions.saverFactory(fetchAuction, auctionStorage.save, generatePath, download);
-    var auctionId = createAuctionIdGetter(auctionStorage.findOneBy);
+    var saveImages = auctions.createImagesSaver(generatePath, download);
+    var saveAuction = auctions.createAuctionSaver(auctionStorage.save, saveImages);
+    var fetchOwnersAuction = auctions.createOwnersAuctionFetcher(fetchAuction);
+    var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
         router.post("/login", json(login, body));
@@ -30,9 +32,10 @@ exports.create = function createConfigurator(config) {
         
         auctionsRouter.get("/", json(auctionStorage.findAll, loginParam, auctionsQuery));
 
-        var validAuctionId = action(auctionId, urlParam, loginParam);
-        var auctionSaver = action(createAuctionSaver, sessionParam, loginParam);
-        auctionsRouter.post("/", json(call, auctionSaver, validAuctionId));
+        var validId = action(getAuctionId, urlParam, loginParam);
+        var ownersAuction = action(fetchOwnersAuction, sessionParam, loginParam, validId);
+        var savedAuction = action(saveAuction, ownersAuction);
+        auctionsRouter.post("/", json(savedAuction));
         
         router.use("/auctions", auctionsRouter);
         router.use(function(err, req, res, next) {
@@ -46,29 +49,25 @@ exports.create = function createConfigurator(config) {
 
 function action(fn) {
     var args = [].slice.call(arguments, 1);
-    return function(req, res, next) {
-        return q.all(args.map(function(arg) { return arg(req, res, next); }))
+    return function(req) {
+        return q.all(args.map(function(arg) { return arg(req); }))
             .then(function(params) {
                 return q.fapply(fn, params);
-            })
-            .catch(function(cause) {
-                next(cause);
-                throw cause;
             });
     };
 }
 
-function json() {
-    var args = arguments;
+function json(handler) {
     return function(req, res, next) {
-        action.apply(null, args)(req, res, next)
-            .then(function(result) { res.json(result); });
+        handler(req)
+            .then(function(result) {
+                res.json(result);
+            })
+            .catch(function(error) {
+                next(error);
+                throw error;
+            });
     };
-}
-
-function call(fn) {
-    var params = [].slice.call(arguments, 1);
-    return fn.apply(null, params);
 }
 
 function sessionParam(req) {

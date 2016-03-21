@@ -7,23 +7,27 @@
   "author": "novic",
   "scripts": {
     "clean": "rm -rf build",
-    "copy": "mkdir build && cp -r client/assets/* build && cp -r client/vendors/* build",
-    "build": "browserify client/src/app.js -o build/js/app.js",
-    "start": "npm run clean && npm run copy && npm run build && node server.js"
-  },
-  "browserify": {
-    "transform": [["stringify", { "appliesTo": { "includeExtensions": [".html"] } }]]
+    "copy": "mkdir build && cp client/index.html build",
+    "watch": "npm run clean && npm run copy && webpack --watch",
+    "start": "npm run clean && npm run copy && webpack && node server.js"
   },
   "dependencies": {
+    "angular": "^1.5.1",
     "body-parser": "^1.15.0",
+    "bootstrap": "^3.3.6",
     "express": "^4.13.4",
+    "file-loader": "^0.8.5",
     "nedb": "^1.8.0",
     "q": "^1.4.1",
     "sanitize-filename": "^1.5.3",
-    "soap": "^0.13.0"
+    "sha256": "^0.2.0",
+    "soap": "^0.13.0",
+    "url-loader": "^0.5.7"
   },
   "devDependencies": {
-    "browserify": "^13.0.0",
-    "stringify": "^5.0.0"
+    "css-loader": "^0.23.1",
+    "raw-loader": "^0.5.1",
+    "style-loader": "^0.13.0",
+    "webpack": "^1.12.14"
   }
 }

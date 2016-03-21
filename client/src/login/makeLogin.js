@@ -1,30 +1,6 @@
-/* global sha256 */
-/* global btoa */
-module.exports = angular.module("login", [])
-    .service("login", loginFactory)
-    .directive("login", function() {
-        return {
-            controller: LoginCtrl,
-            template: require("./login.tpl.html")
-        };
-    });
+var sha256 = require("sha256");
 
-function LoginCtrl($scope, login) {
-    $scope.login = function() {
-        $scope.authorizing = true;
-        
-        login($scope.username, $scope.password)
-            .catch(function(error) {
-                alert(error.data);
-                throw error;
-            })
-            .finally(function() {
-                $scope.authorizing = false;
-            });
-    };
-}
-
-function loginFactory($http, $rootScope) {
+module.exports = function makeLogin($http, $rootScope) {
     return function login(username, password) {
         var hex = sha256(password);
         var bin = hex
@@ -49,4 +25,4 @@ function loginFactory($http, $rootScope) {
                 $rootScope.$broadcast("authorized");
             });
     };
-}
+};

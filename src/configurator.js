@@ -24,13 +24,13 @@ exports.create = function createConfigurator(config) {
     var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy);
 
     return function configure(router) {
-        router.post("/login", json(login, body));
+        router.post("/login", json(action(login, body)));
         
         var auctionsRouter = express.Router();
         
         auctionsRouter.use(filterUnauthorized);
         
-        auctionsRouter.get("/", json(auctionStorage.findAll, loginParam, auctionsQuery));
+        auctionsRouter.get("/", json(action(auctionStorage.findAll, loginParam, auctionsQuery)));
 
         var validId = action(getAuctionId, urlParam, loginParam);
         var ownersAuction = action(fetchOwnersAuction, sessionParam, loginParam, validId);

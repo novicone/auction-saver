@@ -1,6 +1,9 @@
-module.exports = angular.module("browser", [
-        require("./auctions").name
-    ])
+require("./browser.css");
+
+module.exports = angular.module("browser", [require("../page").name])
+    .config(function(pageProvider) {
+        pageProvider.add("Przeglądaj aukcje", require("./browser.tpl.html"));
+    })
     .controller("BrowserCtrl", function($scope, fetchAuctions) {
         fetchAuctions()
             .then(function(auctions) {

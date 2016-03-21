@@ -1,9 +1,6 @@
-angular.module("auctionSaver", [
-        require("./login").name,
-        require("./saver").name,
-        require("./browser").name,
-        require("./page").name
-    ])
+require("./app.css");
+
+module.exports = angular.module("app", [])
     .directive("app", function() {
         return {
             controller: AppCtrl,

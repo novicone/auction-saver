@@ -1,14 +1,16 @@
 var path = require("path");
-
 var express = require("express");
 var bodyParser = require("body-parser");
 
-var configurator = require("./src/configurator");
+var createContext = require("./src/context").create;
+var createConfigurator = require("./src/configurator").create;
+
 
 var app = express();
 app.use(bodyParser.json());
 
-var configure = configurator.create(require("./config"));
+var context = createContext(require("./config"));
+var configure = createConfigurator(context.login, context.auctionStorage, context.saveAuctionAction);
 configure(app);
 
 app.use(express.static(path.resolve(__dirname, "build")));

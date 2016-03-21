@@ -1,10 +1,16 @@
+var _ = require("lodash");
 var q = require("q");
 
-exports.createAuctionSaver = createAuctionSaver;
-exports.createOwnersAuctionFetcher = createOwnersAuctionFetcher;
-exports.createImagesSaver = createImagesSaver;
+exports.createSaveAuctionAction = function createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction) {
+    return function saveAuctionAction(session, login, url) {
+        return q(url)
+            .then(_.partial(getAuctionId, login))
+            .then(_.partial(fetchOwnersAuction, session, login))
+            .then(saveAuction);
+    };
+};
 
-function createAuctionSaver(storeAuction, saveImages) {
+exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImages) {
     return function saveAuction(auction) {
         var storePromise = auction.finished
             ? storeAuction(auction)
@@ -18,22 +24,21 @@ function createAuctionSaver(storeAuction, saveImages) {
                 return auction;
             });
     };
-}
+};
 
-function createOwnersAuctionFetcher(fetchAuction) {
-    return function fetchOwnersAuction(sessionHandle, login, id) {
+exports.createOwnersAuctionFetcher = function createOwnersAuctionFetcher(fetchAuction) {
+    return function fetchOwnersAuction(sessionHandle, owner, id) {
         return fetchAuction(sessionHandle, id)
             .then(function(auction) {
-                auction.owner = login;
-                return auction;
+                return _.assign(auction, { owner: owner });
             });
     };
-}
+};
 
-function createImagesSaver(generatePath, download) {
+exports.createImagesSaver = function createImagesSaver(generatePath, download) {
     return function saveImages(auction) {
         return q.all(auction.images.map(function(imageUrl, i) {
             return download(imageUrl, generatePath(auction.owner, auction, i + 1));
         }));
     };
-}
+};

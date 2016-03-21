@@ -6,6 +6,5 @@ angular.module("auctionSaver", [
     require("./login").name,
     require("./saver").name,
     require("./browser").name,
-    require("./page").name,
     require("./auctions").name
 ]);

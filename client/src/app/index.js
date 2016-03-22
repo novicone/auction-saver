@@ -1,4 +1,3 @@
-/* jshint esnext: true */
 require("./app.css");
 
 const appTemplate = require("./app.tpl.html");

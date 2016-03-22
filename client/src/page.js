@@ -1,5 +1,3 @@
-/* jshint esnext: true */
-
 module.exports = angular.module("page", [])
     .provider("page", createPageProvider);
 

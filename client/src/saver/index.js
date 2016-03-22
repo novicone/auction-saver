@@ -1,4 +1,3 @@
-/* jshint esnext: true */
 module.exports = angular.module("saver", [require("../page").name])
     .config(function(pageProvider) {
         pageProvider.add("Zapisuj aukcje", require("./saver.tpl.html"));

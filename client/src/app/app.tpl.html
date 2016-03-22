@@ -1,4 +1,7 @@
 <div class="app" ng-class="{ login: !authorized }">
     <login ng-if="!authorized"></login>
-    <layout ng-if="authorized"></layout>
+    <div ng-if="authorized">
+        <menu></menu>
+        <page></page>
+    </div>
 </div>

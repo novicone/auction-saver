@@ -2,7 +2,6 @@
 require("./app.css");
 
 const appTemplate = require("./app.tpl.html");
-const layoutTemplate = require("./layout.tpl.html");
 
 module.exports = angular.module("app", [])
     .directive("app", () => ({
@@ -10,7 +9,6 @@ module.exports = angular.module("app", [])
         template: appTemplate,
         replace: true
     }))
-    .directive("layout", () => ({ template: layoutTemplate }))
     .directive("menu", layoutDirective(require("./menu.tpl.html")))
     .directive("page", layoutDirective(require("./page.tpl.html")));
 

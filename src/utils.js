@@ -17,13 +17,3 @@ exports.action = function action(fn) {
             });
     };
 };
-
-var ID_URL_RE = /i(\d+)\.html/;
-var ID_QUERY_RE = /item=(\d+)(&|$)/;
-var ID_RE = /^(\d+)$/;
-
-exports.parseAuctionId = function parseAuctionId(url) {
-    var result = ID_URL_RE.exec(url) || ID_QUERY_RE.exec(url) || ID_RE.exec(url);
-    
-    return result ? result[1] : null;
-};

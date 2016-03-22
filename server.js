@@ -5,7 +5,6 @@ var bodyParser = require("body-parser");
 var createContext = require("./src/context").create;
 var createConfigurator = require("./src/configurator").create;
 
-
 var app = express();
 app.use(bodyParser.json());
 

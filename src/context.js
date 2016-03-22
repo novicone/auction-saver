@@ -6,7 +6,9 @@ var utils = require("./utils");
 var auctions = require("./auctions");
 var download = require("./download");
 var storage = require("./storage");
+
 var createPathGenerator = require("./pathGenerator").create;
+var createIdParser = require("./idParser").create;
 
 var createSaveAuctionAction = auctions.createSaveAuctionAction;
 var createOwnersAuctionFetcher = auctions.createOwnersAuctionFetcher;
@@ -19,21 +21,23 @@ exports.create = function createContext(config) {
     });
     var apiMethod = _.partial(api.method, apiProvider);
     var auctionStorage = storage.auctionStorage();
+    
+    var idPatterns = config.idPatterns.map(function(pattern) { return new RegExp(pattern); });
+    var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy, createIdParser(idPatterns));
+    var fetchOwnersAuction = createOwnersAuctionFetcher(apiMethod("fetchAuction"));
+    var saveAuction = createAuctionSaver(auctionStorage.save, createImagesSaver(createPathGenerator("images"), download));
+    var saveAuctionAction = createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction);
 
     return {
         login: apiMethod("login"),
         auctionStorage: auctionStorage,
-        saveAuctionAction: createSaveAuctionAction(createAuctionIdGetter(auctionStorage.findOneBy),
-                                                   createOwnersAuctionFetcher(apiMethod("fetchAuction")),
-                                                   createAuctionSaver(auctionStorage.save,
-                                                                      createImagesSaver(createPathGenerator("images"),
-                                                                                        download)))
+        saveAuctionAction: saveAuctionAction
     };
 };
 
-function createAuctionIdGetter(findAuction) {
+function createAuctionIdGetter(findAuction, parseId) {
     return function getAuctionId(login, url) {
-        var id = utils.parseAuctionId(url);
+        var id = parseId(url);
         
         if (!id) {
             throw { message: "WRONG_ID", status: 400 };

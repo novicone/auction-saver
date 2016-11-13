@@ -25,13 +25,17 @@ exports.create = function createContext(config) {
     var idPatterns = config.idPatterns.map(function(pattern) { return new RegExp(pattern); });
     var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy, createIdParser(idPatterns));
     var fetchOwnersAuction = createOwnersAuctionFetcher(apiMethod("fetchAuction"));
-    var saveAuction = createAuctionSaver(auctionStorage.save, createImagesSaver(createPathGenerator("images"), download));
+    var generatePath = createPathGenerator("images");
+    var saveImages = createImagesSaver(generatePath, download);
+    var saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
     var saveAuctionAction = createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction);
 
     return {
         login: apiMethod("login"),
-        auctionStorage: auctionStorage,
-        saveAuctionAction: saveAuctionAction
+        auctionStorage,
+        generatePath,
+        saveImages,
+        saveAuctionAction
     };
 };
 

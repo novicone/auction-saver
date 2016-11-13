@@ -12,6 +12,11 @@ module.exports = function download(url, path) {
     file.on("error", deferred.reject);
     
     http.get(url, function(response) {
+        if (response.statusCode >= 400) {
+            deferred.reject(new Error("Unexpected status while downloading file: " + response.statusCode));
+            return;
+        }
+
         response.pipe(file);
         
         file.on("finish", deferred.resolve);

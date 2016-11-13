@@ -25,8 +25,9 @@ function updateImages(auctionStorage, generatePath, saveImages, owner) {
                 return;
             }
             console.log("about to update images for %s auctions", filteredAuctions.length);
-            return Promise.all(filteredAuctions
-                .map(auction => saveImages(auction)
+            return sequence(filteredAuctions
+                .map(auction => () => saveImages(auction)
+                    .then(() => console.log("Downloaded images for auction %s", auction.id))
                     .catch(cause => console.warn(cause))))
         })
         .catch(cause => console.error(cause));
@@ -39,6 +40,10 @@ function maybeStat(path) {
         console.warn(error.message);
         return Maybe.Nothing();
     }
+}
+
+function sequence(providers) {
+    return providers.reduce((promise, provider) => promise.then(provider), Promise.resolve());
 }
 
 const owner = process.argv[2];

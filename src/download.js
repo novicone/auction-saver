@@ -1,7 +1,7 @@
 var q = require("q");
 var fs = require("fs");
 var path = require("path");
-var http = require("http");
+var http = require("follow-redirects").http;
 
 module.exports = function download(url, path) {
     console.log("downloading %s to %s", url, path);

@@ -1,4 +1,5 @@
 const statSync = require("fs").statSync;
+const Maybe = require("data.maybe");
 
 const createContext = require("./context").create;
 
@@ -6,11 +7,14 @@ function updateImages(auctionStorage, generatePath, saveImages, owner) {
     function withImageSize(auction) {
         return {
             auction,
-            imageSize: statSync(generatePath(auction.owner, auction, 1)).size
+            imageSize:
+                maybeStat(generatePath(auction.owner, auction, 1))
+                    .map(it => it.size)
+                    .getOrElse(-1)
         }
     }
 
-    return trace("findAll", () => auctionStorage.findAll(owner, { finished: true }))()
+    return auctionStorage.findAll(owner, { finished: true })
         .then(auctions => auctions
                 .map(withImageSize)
                 .filter(it => it.imageSize === 0)
@@ -28,19 +32,13 @@ function updateImages(auctionStorage, generatePath, saveImages, owner) {
         .catch(cause => console.error(cause));
 }
 
-function trace(name, fn) {
-    return arg => {
-        console.log("Starting '%s'", name);
-        return fn(arg)
-            .then(res => {
-                console.log("Finished '%s'", name);
-                return res;
-            })
-            .catch(cause => {
-                console.error("Failed '%s", name, cause);
-                throw cause;
-            });
-    };
+function maybeStat(path) {
+    try {
+        return Maybe.Just(statSync(path));
+    } catch(error) {
+        console.warn(error.message);
+        return Maybe.Nothing();
+    }
 }
 
 const owner = process.argv[2];

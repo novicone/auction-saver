@@ -5,10 +5,11 @@ const bodyParser = require("body-parser");
 const createContext = require("./src/context").create;
 const createConfigurator = require("./src/configurator").create;
 
+const config = require("./config");
+
 const app = express();
 app.use(bodyParser.json());
 
-const config = require("./config");
 const context = createContext(config);
 const configure = createConfigurator(context.login, context.auctionStorage, context.saveAuctionAction);
 configure(app);

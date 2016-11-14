@@ -18,7 +18,7 @@ function SaverCtrl($scope, save, fetchAuctions, log) {
     };
 
     $scope.insertUnfinished = function() {
-        fetchAuctions({ finished: false })
+        fetchAuctions({ finished: false, expired: false })
             .then(auctions => {
                 $scope.auctions = auctions
                     .map(auction => auction.id)

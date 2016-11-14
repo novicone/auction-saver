@@ -1,28 +1,37 @@
-var _ = require("lodash");
-var q = require("q");
+const inspect = require("util").inspect;
+const _ = require("lodash");
+const q = require("q");
 
-exports.createSaveAuctionAction = function createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction) {
+exports.createSaveAuctionAction = function createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction, markExpired) {
     return function saveAuctionAction(session, login, url) {
-        return q(url)
-            .then(_.partial(getAuctionId, login))
-            .then(_.partial(fetchOwnersAuction, session, login))
+        return getAuctionId(login, url)
+            .then(id => fetchOwnersAuction(session, login, id)
+                .catch(error => {
+                    switch(faultcode(error)) {
+                        case "ERR_INVALID_ITEM_ID":
+                            return markExpired(login, id)
+                                .then(() => { throw error; });
+                        default:
+                            throw error;
+                    }
+                }))
             .then(saveAuction);
     };
 };
 
+function faultcode(error) {
+    return _.get(error, "root.Envelope.Body.Fault.faultcode");
+}
+
 exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImages) {
     return function saveAuction(auction) {
-        var storePromise = auction.finished
-            ? storeAuction(auction)
-                .then(function() {
-                    saveImages(auction);
-                })
-            : storeAuction(auction);
+        let storePromise = storeAuction(auction);
 
-        return storePromise
-            .then(function() {
-                return auction;
-            });
+        if (auction.finished) {
+            storePromise = storePromise.then(() => saveImages(auction));
+        }
+
+        return storePromise.then(() => auction);
     };
 };
 
@@ -42,3 +51,7 @@ exports.createImagesSaver = function createImagesSaver(generatePath, download) {
         }));
     };
 };
+
+exports.markExpired = function markExpired(auctionStorage, owner, id) {
+    return auctionStorage.update(owner, id, { expired: true });
+}

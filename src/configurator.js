@@ -1,19 +1,20 @@
-var q = require("q");
-var express = require("express");
+const _ = require("lodash");
+const q = require("q");
+const express = require("express");
 
-var action = require("./utils").action;
-var web = require("./web");
-var json = web.json;
+const action = require("./utils").action;
+const web = require("./web");
+const json = web.json;
 
-var sessionParam = web.headerParam("session");
-var loginParam = web.headerParam("login");
-var urlParam = web.bodyParam("url");
+const sessionParam = web.headerParam("session");
+const loginParam = web.headerParam("login");
+const urlParam = web.bodyParam("url");
 
 exports.create = function createConfigurator(login, auctionStorage, saveAuctionAction) {
     return function configure(router) {
         router.post("/login", json(action(login, body)));
         
-        var auctionsRouter = express.Router();
+        const auctionsRouter = express.Router();
         auctionsRouter.use(filterUnauthorized);
         auctionsRouter.get("/", json(action(auctionStorage.findAll, loginParam, auctionsQuery)));
         auctionsRouter.post("/", json(action(saveAuctionAction, sessionParam, loginParam, urlParam)));
@@ -28,12 +29,17 @@ function body(req) {
 }
 
 function auctionsQuery(req) {
-    var query = { };
-    if (req.query.hasOwnProperty("finished")) {
-        query.finished = req.query.finished === "true";
-    }
+    const makeBoolQuery = _.curry(boolQuery)(req.query);
 
-    return query;
+    return _.assign({}, makeBoolQuery("finished"), makeBoolQuery("expired"));
+}
+
+function boolQuery(query, name) {
+    return query.hasOwnProperty(name)
+        ? { [name]: query[name] === "true"
+            ? true
+            : { $ne: true } }
+        : { };
 }
 
 function filterUnauthorized(req, res, next) {

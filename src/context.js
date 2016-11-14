@@ -1,34 +1,35 @@
-var _ = require("lodash");
-var q = require("q");
+const _ = require("lodash");
+const q = require("q");
 
-var api = require("./api");
-var utils = require("./utils");
-var auctions = require("./auctions");
-var download = require("./download");
-var storage = require("./storage");
+const api = require("./api");
+const utils = require("./utils");
+const auctions = require("./auctions");
+const download = require("./download");
+const storage = require("./storage");
 
-var createPathGenerator = require("./pathGenerator").create;
-var createIdParser = require("./idParser").create;
+const createPathGenerator = require("./pathGenerator").create;
+const createIdParser = require("./idParser").create;
 
-var createSaveAuctionAction = auctions.createSaveAuctionAction;
-var createOwnersAuctionFetcher = auctions.createOwnersAuctionFetcher;
-var createAuctionSaver = auctions.createAuctionSaver;
-var createImagesSaver = auctions.createImagesSaver;
+const createSaveAuctionAction = auctions.createSaveAuctionAction;
+const createOwnersAuctionFetcher = auctions.createOwnersAuctionFetcher;
+const createAuctionSaver = auctions.createAuctionSaver;
+const createImagesSaver = auctions.createImagesSaver;
+const markExpired = _.curry(auctions.markExpired);
 
 exports.create = function createContext(config) {
-    var apiProvider = utils.createLazyProvider(function() {
+    const apiProvider = utils.createLazyProvider(function() {
         return api.initialize(config.allegroWebapi);
     });
-    var apiMethod = _.partial(api.method, apiProvider);
-    var auctionStorage = storage.auctionStorage();
+    const apiMethod = _.partial(api.method, apiProvider);
+    const auctionStorage = storage.auctionStorage();
     
-    var idPatterns = config.idPatterns.map(function(pattern) { return new RegExp(pattern); });
-    var getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy, createIdParser(idPatterns));
-    var fetchOwnersAuction = createOwnersAuctionFetcher(apiMethod("fetchAuction"));
-    var generatePath = createPathGenerator("images");
-    var saveImages = createImagesSaver(generatePath, download);
-    var saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
-    var saveAuctionAction = createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction);
+    const idPatterns = config.idPatterns.map(function(pattern) { return new RegExp(pattern); });
+    const getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy, createIdParser(idPatterns));
+    const fetchOwnersAuction = createOwnersAuctionFetcher(apiMethod("fetchAuction"));
+    const generatePath = createPathGenerator("images");
+    const saveImages = createImagesSaver(generatePath, download);
+    const saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
+    const saveAuctionAction = createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction, markExpired(auctionStorage));
 
     return {
         login: apiMethod("login"),
@@ -41,7 +42,7 @@ exports.create = function createContext(config) {
 
 function createAuctionIdGetter(findAuction, parseId) {
     return function getAuctionId(login, url) {
-        var id = parseId(url);
+        const id = parseId(url);
         
         if (!id) {
             throw { message: "WRONG_ID", status: 400 };

@@ -59,13 +59,16 @@ function createAuctionsStorage() {
         save: function(auction) {
             return update({ id: auction.id, owner: auction.owner }, auction, { upsert: true });
         },
+        update: function(owner, id, props) {
+            return update({ owner, id }, { $set: props });
+        },
         findOne: function(id) {
             return findOneBy({ _id: id });
         },
         findOneBy: findOneBy,
         findAll: function(owner, query) {
             var cursor = db
-                .find(Object.assign({ owner: owner }, query))
+                .find(Object.assign({ owner }, query))
                 .sort({ endingTime: -1 });
             
             return q.nbind(cursor.exec, cursor)();

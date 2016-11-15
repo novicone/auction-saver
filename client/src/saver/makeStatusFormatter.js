@@ -1,6 +1,7 @@
 var map = {
     WRONG_ID: "Nierozpoznawany identyfikator",
-    ALREADY_SAVED: "Aukcja jest już zapisana"
+    ALREADY_SAVED: "Aukcja jest już zapisana",
+    NOT_FOUND: "Nie znaleziono aukcji"
 };
 
 module.exports = function makeStatusFormatter() {

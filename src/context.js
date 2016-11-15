@@ -2,7 +2,7 @@ const _ = require("lodash");
 const q = require("q");
 
 const allegroClient = require("./allegroClient");
-const utils = require("./utils");
+const { createLazyProvider, raise } = require("./utils");
 const auctions = require("./auctions");
 const download = require("./download");
 const storage = require("./storage");
@@ -17,21 +17,21 @@ const createImagesSaver = auctions.createImagesSaver;
 const markExpired = _.curry(auctions.markExpired);
 
 exports.create = function createContext({ allegroWebapi, idPatterns }) {
-    const allegroClientProvider = utils.createLazyProvider(
+    const allegroClientProvider = createLazyProvider(
         () => allegroClient.initialize(allegroWebapi));
     const allegroClientMethod = _.partial(allegroClient.method, allegroClientProvider);
     const auctionStorage = storage.auctionStorage();
     
     const idRegExps = idPatterns.map(pattern => new RegExp(pattern));
-    const getAuctionId = createAuctionIdGetter(auctionStorage.findOneBy, createIdParser(idRegExps));
     const fetchOwnersAuction = createOwnersAuctionFetcher(allegroClientMethod("fetchAuction"));
     const generatePath = createPathGenerator("images");
     const saveImages = createImagesSaver(generatePath, download);
     const saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
-    const saveAuctionAction = createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction, markExpired(auctionStorage));
+    const saveAuctionAction = createSaveAuctionAction(fetchOwnersAuction, saveAuction, markExpired(auctionStorage));
 
     return {
         login: allegroClientMethod("login"),
+        parseId: createIdParser(idRegExps),
         auctionStorage,
         generatePath,
         saveImages,
@@ -52,8 +52,4 @@ function createAuctionIdGetter(findAuction, parseId) {
                                 : id)
             });
     };
-}
-
-function raise(status, message) {
-    throw { status, message };
 }

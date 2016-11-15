@@ -8,12 +8,12 @@ exports.createLazyProvider = function createLazyProvider(factory) {
     };
 };
 
-exports.action = function action(fn) {
-    var args = [].slice.call(arguments, 1);
-    return function(req) {
-        return q.all(args.map(function(arg) { return arg(req); }))
-            .then(function(params) {
-                return q.fapply(fn, params);
-            });
-    };
+exports.action = function action(fn, ...args) {
+    return req =>
+        q.all(args.map(arg => arg(req)))
+            .then(params => q.fapply(fn, params));
 };
+
+exports.raise = function raise(status, message) {
+    throw { status, message };
+}

@@ -1,16 +1,22 @@
 const _ = require("lodash");
 const q = require("q");
 
-exports.createSaveAuctionAction = function createSaveAuctionAction(getAuctionId, fetchOwnersAuction, saveAuction, markExpired) {
-    return function saveAuctionAction(session, login, url) {
-        return getAuctionId(login, url)
-            .then(id => fetchOwnersAuction(session, login, id)
-                .then(maybeAuction => maybeAuction.cata({
-                    Just: _.identity,
-                    Nothing: () => markExpired(login, id)
-                        .then(() => { throw { status: 404, message: "Nie znaleziono aukcji" }; })
-                })))
+const { raise } = require("./utils");
+
+exports.createSaveAuctionAction = function createSaveAuctionAction(fetchOwnersAuction, saveAuction, markExpired) {
+    return function saveAuctionAction(session, login, id) {
+        return fetchOwnersAuction(session, login, id)
+            .then(maybeAuction => maybeAuction.cata({
+                Just: _.identity,
+                Nothing: () => markExpired(login, id)
+                    .then(() => raise(404, "NOT_FOUND"))
+            }))
             .then(saveAuction);
+            /*
+            .then(auction => storeAuction(auction)
+                .then(() => auction.finished && saveImages(auction))
+                .then(() => auction));
+            */
     };
 };
 

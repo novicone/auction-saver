@@ -11,7 +11,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const context = createContext(config);
-const configure = createConfigurator(context.login, context.auctionStorage, context.saveAuctionAction);
+const configure = createConfigurator(context);
 configure(app);
 
 app.use(express.static(path.resolve(__dirname, "build")));

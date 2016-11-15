@@ -22,3 +22,7 @@ exports.json = function json(handler) {
             });
     };
 };
+
+exports.body = function body(req) {
+    return req.body;
+}

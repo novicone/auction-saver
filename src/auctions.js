@@ -5,22 +5,14 @@ exports.createSaveAuctionAction = function createSaveAuctionAction(getAuctionId,
     return function saveAuctionAction(session, login, url) {
         return getAuctionId(login, url)
             .then(id => fetchOwnersAuction(session, login, id)
-                .catch(error => {
-                    switch(faultcode(error)) {
-                        case "ERR_INVALID_ITEM_ID":
-                            return markExpired(login, id)
-                                .then(() => { throw error; });
-                        default:
-                            throw error;
-                    }
-                }))
+                .then(maybeAuction => maybeAuction.cata({
+                    Just: _.identity,
+                    Nothing: () => markExpired(login, id)
+                        .then(() => { throw { status: 404, message: "Nie znaleziono aukcji" }; })
+                })))
             .then(saveAuction);
     };
 };
-
-function faultcode(error) {
-    return _.get(error, "root.Envelope.Body.Fault.faultcode");
-}
 
 exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImages) {
     return function saveAuction(auction) {
@@ -37,9 +29,7 @@ exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImage
 exports.createOwnersAuctionFetcher = function createOwnersAuctionFetcher(fetchAuction) {
     return function fetchOwnersAuction(sessionHandle, owner, id) {
         return fetchAuction(sessionHandle, id)
-            .then(function(auction) {
-                return _.assign(auction, { owner: owner });
-            });
+            .then(liftM(auction => _.assign({ }, auction, { owner })));
     };
 };
 
@@ -53,4 +43,8 @@ exports.createImagesSaver = function createImagesSaver(generatePath, download) {
 
 exports.markExpired = function markExpired(auctionStorage, owner, id) {
     return auctionStorage.update(owner, id, { expired: true });
+}
+
+function liftM(fn) {
+    return m => m.map(fn);
 }

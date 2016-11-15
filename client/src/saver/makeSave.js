@@ -5,7 +5,7 @@ module.exports = function makeSave($q, $http, log) {
     function saveAuction(auction) {
         return $http.post("/auctions", { url: auction })
             .then(({ data }) => log.append({ auction, result: data }))
-            .catch(({ data }) => log.append({ auction, failure: data }));
+            .catch(({ data }) => log.append({ auction, failure: data || "Nieznany błąd" }));
     }
 
     return function save(auctionsText) {

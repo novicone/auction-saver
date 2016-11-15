@@ -35,9 +35,8 @@ exports.createOwnersAuctionFetcher = function createOwnersAuctionFetcher(fetchAu
 
 exports.createImagesSaver = function createImagesSaver(generatePath, download) {
     return function saveImages(auction) {
-        return q.all(auction.images.map(function(imageUrl, i) {
-            return download(imageUrl, generatePath(auction.owner, auction, i + 1));
-        }));
+        return q.all(auction.images
+            .map((imageUrl, i) => download(imageUrl, generatePath(auction.owner, auction, i + 1))));
     };
 };
 

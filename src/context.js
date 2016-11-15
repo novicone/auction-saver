@@ -40,19 +40,20 @@ exports.create = function createContext({ allegroWebapi, idPatterns }) {
 };
 
 function createAuctionIdGetter(findAuction, parseId) {
-    return function getAuctionId(login, url) {
-        const id = parseId(url);
-        
-        if (!id) {
-            throw { message: "WRONG_ID", status: 400 };
-        }
-        
-        return findAuction({ id: id, owner: login })
-            .then(function(auction) {
-                if (auction && auction.finished) {
-                    throw { message: "ALREADY_SAVED", status: 406 };
-                }
-                return id;
+    return function getAuctionId(owner, url) {
+        return parseId(url)
+            .cata({
+                Nothing: () => raise(400, "WRONG_ID"),
+                Just: id =>
+                    findAuction({ id, owner, finished: true })
+                        .then(auction =>
+                            auction
+                                ? raise(406, "ALREADY_SAVED")
+                                : id)
             });
     };
+}
+
+function raise(status, message) {
+    throw { status, message };
 }

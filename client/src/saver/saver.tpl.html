@@ -19,7 +19,13 @@
             </thead>
             <tbody>
                 <tr ng-repeat="row in log" ng-class="{ danger: row.failure }">
-                    <td>{{ row.auction }}</td>
+                    <td>
+                        {{ row.auction }}
+                        &nbsp;
+                        <a ng-if="row.result.id" ng-href="http://allegro.pl/i{{row.result.id}}.html" target="_blank">
+                            [link]
+                        </a>
+                    </td>
                     <td>{{ row | status }}</td>
                 </tr>
             </tbody>

@@ -12,7 +12,7 @@
             </thead>
             <tbody>
                 <tr ng-repeat="auction in auctions">
-                    <td>{{ auction.id }}</td>
+                    <td><auction-link auction="auction">{{ auction.id }}</auction-link></td>
                     <td>{{ auction.name }}</td>
                     <td>{{ auction.price | price }}</td>
                     <td>{{ auction.seller }}</td>

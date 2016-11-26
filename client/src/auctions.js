@@ -1,5 +1,6 @@
 module.exports = angular.module("auctions", [])
-    .service("fetchAuctions", fetchAuctionsFactory);
+    .service("fetchAuctions", fetchAuctionsFactory)
+    .directive("auctionLink", auctionLink);
 
 function fetchAuctionsFactory($http) {
     return function fetchAuctions(criteria) {
@@ -7,5 +8,16 @@ function fetchAuctionsFactory($http) {
             .then(function(response) {
                 return response.data;
             });
+    };
+}
+
+function auctionLink() {
+    return {
+        template: require("./auctionLink.tpl.html"),
+        replace: true,
+        transclude: true,
+        scope: {
+            auction: "="
+        }
     };
 }

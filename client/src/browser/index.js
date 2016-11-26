@@ -1,6 +1,9 @@
 require("./browser.css");
 
-module.exports = angular.module("browser", [require("../page").name])
+module.exports = angular.module(
+    "browser", [
+        require("../page").name,
+        require("../auctions").name])
     .config(function(pageProvider) {
         pageProvider.add("Przeglądaj aukcje", require("./browser.tpl.html"));
     })

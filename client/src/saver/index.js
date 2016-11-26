@@ -1,4 +1,4 @@
-module.exports = angular.module("saver", [require("../page").name])
+module.exports = angular.module("saver", [require("../page").name, require("../auctions").name])
     .config(function(pageProvider) {
         pageProvider.add("Zapisuj aukcje", require("./saver.tpl.html"));
     })

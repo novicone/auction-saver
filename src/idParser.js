@@ -6,6 +6,6 @@ exports.create = function createIdParser(patterns) {
         _(patterns)
             .map(pattern => pattern.exec(input))
             .filter(_.identity)
-            .map(([group]) => group)
+            .map(([match, group]) => group)
             .head());
 };

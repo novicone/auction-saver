@@ -11,10 +11,17 @@ module.exports = angular.module("app", [])
     .directive("menu", layoutDirective(require("./menu.tpl.html")))
     .directive("page", layoutDirective(require("./page.tpl.html")));
 
-function AppCtrl($scope) {
+function AppCtrl($scope, $http) {
     $scope.$on("authorized", function() {
         $scope.authorized = true;
     });
+
+    $http.get("/verify")
+        .then(({ data }) => {
+            $scope.ready = true;
+            $scope.authorized = data;
+        })
+        .catch(({ data }) => alert(data));
 }
 
 function layoutDirective(template) {

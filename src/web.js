@@ -10,22 +10,21 @@ exports.bodyParam = function bodyParam(name) {
     };
 };
 
-exports.json = function json(handler) {
-    return function(req, res, next) {
-        handler(req)
-            .then(function(result) {
-                res.json(result);
-            })
-            .catch(function(error) {
+exports.sessionParam = (name) => ({ session }) => session[name];
+
+exports.body = ({ body }) => body;
+
+const handler = (respond) => (perform) =>
+    (req, res, next) =>
+        perform(req)
+            .then(respond(res))
+            .catch((error) => {
                 next(error);
                 throw error;
             });
-    };
-};
+exports.handler = handler;
 
-exports.body = function body(req) {
-    return req.body;
-}
+exports.json = handler((res) => (value) => res.json(value));
 
 exports.context = ({ app: { locals: { context } } }) => context;
 

@@ -13,11 +13,7 @@ module.exports = function makeLogin($http, $rootScope) {
         };
 
         return $http.post("/login", credentials)
-            .then(({ data }) => {
-                Object.assign($http.defaults.headers.common, {
-                    session: data,
-                    login: username
-                });
+            .then(() => {
                 $rootScope.$broadcast("authorized");
             });
     };

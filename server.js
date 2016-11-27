@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
+const session = require("express-session");
 
 const createContext = require("./src/context").create;
 const initRoutes = require("./src/routes").init;
@@ -9,6 +10,11 @@ const config = require("./config");
 
 const app = express();
 app.use(bodyParser.json());
+app.use(session({
+	secret: "this-so-secret",
+	resave: true,
+	saveUninitialized: true
+}));
 app.use(express.static(path.resolve(__dirname, "build")));
 
 app.locals.context = createContext(config);

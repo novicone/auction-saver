@@ -17,7 +17,7 @@ const createImagesSaver = auctions.createImagesSaver;
 const markExpired = _.curry(auctions.markExpired);
 
 exports.create = function createContext({ allegroWebapi, idPatterns }) {
-    const allegroClient = makeAllegroClient(allegroWebapi, "login", "fetchAuction");
+    const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction");
 
     const auctionStorage = storage.auctionStorage();
     

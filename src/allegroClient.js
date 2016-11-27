@@ -37,6 +37,9 @@ function initializeApi({ key, wsdl }) {
                         .then(({ verKey }) => loginEnc(credentials, verKey))
                         .then(({ sessionHandlePart }) => sessionHandlePart)
                 },
+                getMyData(sessionHandle) {
+                    return call("doGetMyData", { sessionHandle });
+                },
                 fetchAuction(sessionHandle, id) {
                     return call("doShowItemInfoExt", {
                             sessionHandle: sessionHandle,
@@ -46,7 +49,7 @@ function initializeApi({ key, wsdl }) {
                         })
                         .then(info => Maybe.Just(mapInfoToAuction(info)))
                         .catch(error => {
-                            switch(faultcode(error)) {
+                            switch(error.faultcode) {
                                 case "ERR_INVALID_ITEM_ID":
                                     return Maybe.Nothing();
                                 default:
@@ -60,6 +63,10 @@ function initializeApi({ key, wsdl }) {
 
 function faultcode(error) {
     return _.get(error, "root.Envelope.Body.Fault.faultcode");
+}
+
+function faultstring(error) {
+    return _.get(error, "root.Envelope.Body.Fault.faultstring");
 }
 
 function mapInfoToAuction(info) {
@@ -90,6 +97,17 @@ function caller(client) {
     return function call(name, params) {
         console.log(name, params);
         return q.denodeify(client[name])(params)
-            .then(([result]) => result);
+            .then(([result]) => result)
+            .catch((error) => {
+                throw new AllegroError(faultcode(error), faultstring(error))
+            });
     };
+}
+
+class AllegroError extends Error {
+    constructor(faultcode, faultstring)  {
+        super(faultcode + " - " + faultstring);
+        this.faultcode = faultcode;
+        this.faultstring = faultstring;
+    }
 }

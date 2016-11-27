@@ -1,14 +1,16 @@
 const { assign, curry, get, partial } = require("lodash");
 const express = require("express");
 
-const { json, body, headerParam, bodyParam, context, action } = require("./web");
+const { json, body, sessionParam, bodyParam, context, action } = require("./web");
 
-const sessionParam = headerParam("session");
-const loginParam = headerParam("login");
+const allegroSessionIdParam = sessionParam("allegroSessionId");
+const loginParam = sessionParam("login");
 const urlParam = bodyParam("url");
 
 exports.init = function(router) {
-    router.post("/login", json(action(login, context, body)));
+    router.post("/login", json(action(login, sessionContext, body)));
+    router.get("/verify", json(action(verify, authorizedContext, allegroSessionIdParam)));
+    router.get("/logout", logout);
     
     const auctionsRouter = express.Router();
     auctionsRouter.use(filterUnauthorized);
@@ -21,7 +23,28 @@ exports.init = function(router) {
     router.use(handleError);
 }
 
-const login = ({ allegroClient: { login } }) => login;
+const login = ({ allegroClient, session }) => (credentials) =>
+    allegroClient.login(credentials)
+        .then((allegroSessionId) =>
+            assign(session, {
+                allegroSessionId,
+                login: credentials.login
+            }));
+
+const verify = ({ allegroClient }) => (session) =>
+    allegroClient.getMyData(session || "")
+        .then(() => true)
+        .catch((error) => {
+            console.error(error);
+            return false;
+        });
+
+function logout(req, res) {
+    req.session.destroy();
+    res.redirect("/");
+};
+
+const sessionContext = (req) => assign({ }, context(req), { session: req.session });
 
 const userAction = (fnPath, param) => action((ctx) => get(ctx, fnPath), authorizedContext, param);
 
@@ -30,7 +53,8 @@ const authorizedContext = (req) => {
     const { auctionStorage, saveAuctionAction } = ctx;
     const { update, findAll } = auctionStorage;
 
-    const { headers: { session, login } } = req;
+    const session = allegroSessionIdParam(req);
+    const login = loginParam(req);
 
     return assign({ }, ctx, {
         auctionStorage: assign({ }, auctionStorage, {
@@ -55,7 +79,8 @@ const boolQuery = (query, name) =>
         : { };
 
 function filterUnauthorized(req, res, next) {
-    if (!loginParam(req) || !sessionParam(req)) {
+    if (!loginParam(req) || !allegroSessionIdParam(req)) {
+        console.log(req.session);
         return next({ message: "Forbidden", status: 403 });
     }
     next();

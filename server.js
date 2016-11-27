@@ -3,18 +3,16 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 const createContext = require("./src/context").create;
-const createConfigurator = require("./src/configurator").create;
+const initRoutes = require("./src/routes").init;
 
 const config = require("./config");
 
 const app = express();
 app.use(bodyParser.json());
-
-const context = createContext(config);
-const configure = createConfigurator(context);
-configure(app);
-
 app.use(express.static(path.resolve(__dirname, "build")));
+
+app.locals.context = createContext(config);
+initRoutes(app);
 
 const serverConfig = config.server || { };
 

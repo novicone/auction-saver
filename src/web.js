@@ -26,3 +26,7 @@ exports.json = function json(handler) {
 exports.body = function body(req) {
     return req.body;
 }
+
+exports.context = ({ app: { locals: { context } } }) => context;
+
+exports.action = (fn, context, param) => (req) => fn(context(req))(param(req));

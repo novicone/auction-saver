@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const q = require("q");
 
-const allegroClient = require("./allegroClient");
+const allegroClientModule = require("./allegroClient");
 const { createLazyProvider, raise } = require("./utils");
 const auctions = require("./auctions");
 const download = require("./download");
@@ -17,39 +17,34 @@ const createImagesSaver = auctions.createImagesSaver;
 const markExpired = _.curry(auctions.markExpired);
 
 exports.create = function createContext({ allegroWebapi, idPatterns }) {
-    const allegroClientProvider = createLazyProvider(
-        () => allegroClient.initialize(allegroWebapi));
-    const allegroClientMethod = _.partial(allegroClient.method, allegroClientProvider);
+    const allegroClient = makeAllegroClient(allegroWebapi, "login", "fetchAuction");
+
     const auctionStorage = storage.auctionStorage();
     
     const idRegExps = idPatterns.map(pattern => new RegExp(pattern));
-    const fetchOwnersAuction = createOwnersAuctionFetcher(allegroClientMethod("fetchAuction"));
+    const fetchOwnersAuction = createOwnersAuctionFetcher(allegroClient.fetchAuction);
     const generatePath = createPathGenerator("images");
     const saveImages = createImagesSaver(generatePath, download);
     const saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
-    const saveAuctionAction = createSaveAuctionAction(fetchOwnersAuction, saveAuction, markExpired(auctionStorage));
+    const saveAuctionAction = createSaveAuctionAction(
+        auctions.getValidAuctionId(auctionStorage, createIdParser(idRegExps)),
+        fetchOwnersAuction,
+        saveAuction,
+        markExpired(auctionStorage));
 
     return {
-        login: allegroClientMethod("login"),
-        parseId: createIdParser(idRegExps),
         auctionStorage,
         generatePath,
         saveImages,
-        saveAuctionAction
+        saveAuctionAction,
+        allegroClient
     };
 };
 
-function createAuctionIdGetter(findAuction, parseId) {
-    return function getAuctionId(owner, url) {
-        return parseId(url)
-            .cata({
-                Nothing: () => raise(400, "WRONG_ID"),
-                Just: id =>
-                    findAuction({ id, owner, finished: true })
-                        .then(auction =>
-                            auction
-                                ? raise(406, "ALREADY_SAVED")
-                                : id)
-            });
-    };
+function makeAllegroClient(allegroWebapi, ...methods) {
+    const provider = createLazyProvider(
+        () => allegroClientModule.initialize(allegroWebapi));
+    const makeMethod = _.partial(allegroClientModule.method, provider);
+
+    return _.mapValues(_.keyBy(methods), makeMethod);
 }

@@ -3,22 +3,29 @@ const q = require("q");
 
 const { raise } = require("./utils");
 
-exports.createSaveAuctionAction = function createSaveAuctionAction(fetchOwnersAuction, saveAuction, markExpired) {
-    return function saveAuctionAction(session, login, id) {
-        return fetchOwnersAuction(session, login, id)
-            .then(maybeAuction => maybeAuction.cata({
-                Just: _.identity,
-                Nothing: () => markExpired(login, id)
-                    .then(() => raise(404, "NOT_FOUND"))
-            }))
-            .then(saveAuction);
-            /*
-            .then(auction => storeAuction(auction)
-                .then(() => auction.finished && saveImages(auction))
-                .then(() => auction));
-            */
-    };
-};
+exports.createSaveAuctionAction = (getValidAuctionId, fetchOwnersAuction, saveAuction, markExpired) =>
+    (session, login, url) =>
+        getValidAuctionId(login, url)
+            .then((id) => fetchOwnersAuction(session, login, id)
+                .then(maybeAuction => maybeAuction.cata({
+                    Just: _.identity,
+                    Nothing: () => markExpired(login, id)
+                        .then(() => raise(404, "NOT_FOUND"))
+                }))
+                .then(saveAuction));
+
+exports.getValidAuctionId = ({ findOneBy }, parseId) =>
+    (owner, url) =>
+        parseId(url)
+            .cata({
+                Nothing: () => raise(400, "WRONG_ID"),
+                Just: id =>
+                    findOneBy({ id, owner, finished: true })
+                        .then(auction =>
+                            auction
+                                ? raise(406, "ALREADY_SAVED")
+                                : id)
+            });
 
 exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImages) {
     return function saveAuction(auction) {

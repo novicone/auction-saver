@@ -40,6 +40,20 @@ function initializeApi({ key, wsdl }) {
                 getMyData(sessionHandle) {
                     return call("doGetMyData", { sessionHandle });
                 },
+                getUserLogin(userId) {
+                    return call("doGetUserLogin", {
+                        countryId: 1,
+                        userId,
+                        webapiKey: key
+                    })
+                },
+                loginWithAccessToken(accessToken) {
+                    return call("doLoginWithAccessToken", {
+                        accessToken,
+                        countryCode: 1,
+                        webapiKey: key
+                    });
+                },
                 fetchAuction(sessionHandle, id) {
                     return call("doShowItemInfoExt", {
                             sessionHandle: sessionHandle,

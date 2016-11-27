@@ -1,19 +1,16 @@
-exports.headerParam = function headerParam(name) {
-    return function(req) {
-        return req.headers[name];
-    };
-};
+const reqParam = (prop) => (name) => (req) => req[prop][name];
 
-exports.bodyParam = function bodyParam(name) {
-    return function(req) {
-        return req.body[name];
-    };
-};
+exports.queryParam = reqParam("query");
 
-exports.sessionParam = (name) => ({ session }) => session[name];
+exports.headerParam = reqParam("headers");
+
+exports.bodyParam = reqParam("body");
+
+exports.sessionParam = reqParam("session");
 
 exports.body = ({ body }) => body;
 
+// respond :: res -> A -> void
 const handler = (respond) => (perform) =>
     (req, res, next) =>
         perform(req)
@@ -25,6 +22,8 @@ const handler = (respond) => (perform) =>
 exports.handler = handler;
 
 exports.json = handler((res) => (value) => res.json(value));
+
+exports.redirect = handler((res) => (value) => res.redirect(value));
 
 exports.context = ({ app: { locals: { context } } }) => context;
 

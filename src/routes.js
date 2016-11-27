@@ -8,9 +8,7 @@ const loginParam = sessionParam("login");
 const urlParam = bodyParam("url");
 
 exports.init = function(router) {
-    router.post("/login", json(action(login, sessionContext, body)));
     router.get("/verify", json(action(verify, authorizedContext, allegroSessionIdParam)));
-    router.get("/logout", logout);
     
     const auctionsRouter = express.Router();
     auctionsRouter.use(filterUnauthorized);
@@ -22,29 +20,6 @@ exports.init = function(router) {
 
     router.use(handleError);
 }
-
-const login = ({ allegroClient, session }) => (credentials) =>
-    allegroClient.login(credentials)
-        .then((allegroSessionId) =>
-            assign(session, {
-                allegroSessionId,
-                login: credentials.login
-            }));
-
-const verify = ({ allegroClient }) => (session) =>
-    allegroClient.getMyData(session || "")
-        .then(() => true)
-        .catch((error) => {
-            console.error(error);
-            return false;
-        });
-
-function logout(req, res) {
-    req.session.destroy();
-    res.redirect("/");
-};
-
-const sessionContext = (req) => assign({ }, context(req), { session: req.session });
 
 const userAction = (fnPath, param) => action((ctx) => get(ctx, fnPath), authorizedContext, param);
 
@@ -64,6 +39,14 @@ const authorizedContext = (req) => {
         saveAuctionAction: partial(saveAuctionAction, session, login)
     });
 }
+
+const verify = ({ allegroClient }) => (session) =>
+    allegroClient.getMyData(session || "")
+        .then(() => true)
+        .catch((error) => {
+            console.error(error);
+            return false;
+        });
 
 function auctionsQuery({ query }) {
     const makeBoolQuery = curry(boolQuery)(query);

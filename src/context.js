@@ -6,6 +6,7 @@ const { createLazyProvider, raise } = require("./utils");
 const auctions = require("./auctions");
 const download = require("./download");
 const storage = require("./storage");
+const AllegroOAuthRequests = require("./auth/AllegroOAuthRequests");
 
 const createPathGenerator = require("./pathGenerator").create;
 const createIdParser = require("./idParser").create;
@@ -16,8 +17,8 @@ const createAuctionSaver = auctions.createAuctionSaver;
 const createImagesSaver = auctions.createImagesSaver;
 const markExpired = _.curry(auctions.markExpired);
 
-exports.create = function createContext({ allegroWebapi, idPatterns }) {
-    const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction");
+exports.create = function createContext({ oAuth, allegroWebapi, idPatterns }) {
+    const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction", "getUserLogin", "loginWithAccessToken");
 
     const auctionStorage = storage.auctionStorage();
     
@@ -37,7 +38,8 @@ exports.create = function createContext({ allegroWebapi, idPatterns }) {
         generatePath,
         saveImages,
         saveAuctionAction,
-        allegroClient
+        allegroClient,
+        oAuthRequests: new AllegroOAuthRequests(oAuth)
     };
 };
 

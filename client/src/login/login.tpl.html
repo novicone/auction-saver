@@ -1,17 +1,8 @@
 <div class="container">
 
-    <form class="form-signin" ng-submit="login()">
+    <form class="form-signin">
         <h2 class="form-signin-heading">Zaloguj się</h2>
-        
-        <fieldset ng-disabled="authorizing">
-            <label for="inputLogin" class="sr-only">Login</label>
-            <input type="text" id="inputLogin" class="form-control" placeholder="Login" required autofocus ng-model="username">
-            
-            <label for="inputPassword" class="sr-only">Password</label>
-            <input type="password" id="inputPassword" class="form-control" placeholder="Password" required ng-model="password">
-        </fieldset>
-        
-        <button class="btn btn-lg btn-primary btn-block" type="submit" ng-disabled="authorizing">Logowane</button>
+        <a class="btn btn-lg btn-primary btn-block" href="/auth">Logowane z Allegro</a>
     </form>
 
 </div>

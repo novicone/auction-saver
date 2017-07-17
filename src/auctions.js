@@ -1,4 +1,4 @@
-const _ = require("lodash");
+const { assign, identity } = require("lodash");
 const q = require("q");
 
 const { raise } = require("./utils");
@@ -7,8 +7,8 @@ exports.createSaveAuctionAction = (getValidAuctionId, fetchOwnersAuction, saveAu
     (session, login, url) =>
         getValidAuctionId(login, url)
             .then((id) => fetchOwnersAuction(session, login, id)
-                .then(maybeAuction => maybeAuction.cata({
-                    Just: _.identity,
+                .then((maybeAuction) => maybeAuction.cata({
+                    Just: identity,
                     Nothing: () => markExpired(login, id)
                         .then(() => raise(404, "NOT_FOUND"))
                 }))
@@ -42,7 +42,7 @@ exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImage
 exports.createOwnersAuctionFetcher = function createOwnersAuctionFetcher(fetchAuction) {
     return function fetchOwnersAuction(sessionHandle, owner, id) {
         return fetchAuction(sessionHandle, id)
-            .then(liftM(auction => _.assign({ }, auction, { owner })));
+            .then(liftM(auction => assign({ }, auction, { owner })));
     };
 };
 

@@ -9,9 +9,9 @@ const loginParam = sessionParam("login");
 const urlParam = bodyParam("url");
 
 module.exports = (app) => {
-    app.use(handleError);
     install(app, "/", auth);
     install(app, "/auctions", auctions);
+    app.use(handleError);
 };
 
 const install = (app, path, configurer) => {

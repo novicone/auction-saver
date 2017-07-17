@@ -1,8 +1,6 @@
 var q = require("q");
 var Datastore = require("nedb");
 
-var utils = require("./utils");
-
 exports.createSessionStorage = createSessionStorage;
 exports.auctionStorage = createAuctionsStorage;
 

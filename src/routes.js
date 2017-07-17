@@ -1,25 +1,30 @@
 const { assign, curry, get, partial } = require("lodash");
-const express = require("express");
+const { Router } = require("express");
 
 const { json, body, sessionParam, bodyParam, context, action } = require("./web");
+const auth = require("./auth/routes");
+const { allegroSessionIdParam } = auth;
 
-const allegroSessionIdParam = sessionParam("allegroSessionId");
 const loginParam = sessionParam("login");
 const urlParam = bodyParam("url");
 
-exports.init = function(router) {
-    router.get("/verify", json(action(verify, authorizedContext, allegroSessionIdParam)));
-    
-    const auctionsRouter = express.Router();
-    auctionsRouter.use(filterUnauthorized);
+module.exports = (app) => {
+    app.use(handleError);
+    install(app, "/", auth);
+    install(app, "/auctions", auctions);
+};
 
-    auctionsRouter.get("/", json(userAction("auctionStorage.findAll", auctionsQuery)));
-    auctionsRouter.post("/", json(userAction("saveAuctionAction", urlParam)));
-        
-    router.use("/auctions", auctionsRouter);
+const install = (app, path, configurer) => {
+    const router = Router();
+    configurer(router);
+    app.use(path, router);
+};
 
-    router.use(handleError);
-}
+const auctions = (router) => {
+    router.use(filterUnauthorized);
+    router.get("/", json(userAction("auctionStorage.findAll", auctionsQuery)));
+    router.post("/", json(userAction("saveAuctionAction", urlParam)));
+};
 
 const userAction = (fnPath, param) => action((ctx) => get(ctx, fnPath), authorizedContext, param);
 
@@ -39,14 +44,6 @@ const authorizedContext = (req) => {
         saveAuctionAction: partial(saveAuctionAction, session, login)
     });
 }
-
-const verify = ({ allegroClient }) => (session) =>
-    allegroClient.getMyData(session || "")
-        .then(() => true)
-        .catch((error) => {
-            console.error(error);
-            return false;
-        });
 
 function auctionsQuery({ query }) {
     const makeBoolQuery = curry(boolQuery)(query);

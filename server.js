@@ -4,8 +4,7 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 
 const createContext = require("./src/context").create;
-const initRoutes = require("./src/routes").init;
-const attachAuthRoutes = require("./src/auth/routes").attach;
+const initRoutes = require("./src/routes");
 
 const config = require("./config");
 
@@ -20,7 +19,6 @@ app.use(express.static(path.resolve(__dirname, "build")));
 
 app.locals.context = createContext(config);
 initRoutes(app);
-attachAuthRoutes(app);
 
 const serverConfig = config.server || { };
 

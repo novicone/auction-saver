@@ -1,10 +1,10 @@
-var path = require("path");
-var sanitize = require("sanitize-filename");
+const path = require("path");
+const sanitize = require("sanitize-filename");
 
 exports.create = function createPathGenerator(basePath) {
-    return function generatePath(login, auction, imageNumber) {
-        var dirName = auction.sold ? "" : (auction.reservePrice ? "minimalna" : "niesprzedane");
-        var fileName = [
+    return function generatePath(auction, imageNumber) {
+        const dirName = auction.sold ? "" : (auction.reservePrice ? "minimalna" : "niesprzedane");
+        let fileName = [
             Math.round(auction.price) + " zl",
             auction.name,
             "(numer " + auction.id + ")",
@@ -14,12 +14,12 @@ exports.create = function createPathGenerator(basePath) {
         if (auction.images.length > 1) {
             fileName += " foto_" + imageNumber;
         }
-        return path.join(basePath, login, dirName, sanitize(fileName + ".jpg"));
+        return path.join(basePath, auction.owner, dirName, sanitize(fileName + ".jpg"));
     };
 };
 
-var DATE_RE = /(\w+), (\d+)\/(\d+)\/(\d+)/;
-var WEEKDAYS = {
+const DATE_RE = /(\w+), (\d+)\/(\d+)\/(\d+)/;
+const WEEKDAYS = {
     Mon: "pon",
     Tue: "wto",
     Wed: "sro",
@@ -28,10 +28,10 @@ var WEEKDAYS = {
     Sat: "sob",
     Sun: "nie"
 };
-var MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
+const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paz", "lis", "gru"];
 
 function getDateString(date) {
-    var native = date.toLocaleString("en-US", {
+    const native = date.toLocaleString("en-US", {
         timeZone: "Europe/Warsaw",
         year: "numeric",
         month: "numeric",
@@ -39,7 +39,7 @@ function getDateString(date) {
         weekday: "short"
     });
     
-    var nativeParts = DATE_RE.exec(native);
+    const nativeParts = DATE_RE.exec(native);
     
     return [
         WEEKDAYS[nativeParts[1]],

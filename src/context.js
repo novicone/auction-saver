@@ -1,5 +1,4 @@
-const _ = require("lodash");
-const q = require("q");
+const { partial, mapValues, keyBy } = require("lodash");
 
 const allegroClientModule = require("./allegroClient");
 const { createLazyProvider, raise } = require("./utils");
@@ -12,26 +11,20 @@ const createPathGenerator = require("./pathGenerator").create;
 const createIdParser = require("./idParser").create;
 
 const createSaveAuctionAction = auctions.createSaveAuctionAction;
-const createOwnersAuctionFetcher = auctions.createOwnersAuctionFetcher;
-const createAuctionSaver = auctions.createAuctionSaver;
 const createImagesSaver = auctions.createImagesSaver;
-const markExpired = _.curry(auctions.markExpired);
 
 exports.create = function createContext({ oAuth, allegroWebapi, idPatterns }) {
     const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction", "getUserLogin", "loginWithAccessToken");
-
     const auctionStorage = storage.auctionStorage();
     
     const idRegExps = idPatterns.map(pattern => new RegExp(pattern));
-    const fetchOwnersAuction = createOwnersAuctionFetcher(allegroClient.fetchAuction);
     const generatePath = createPathGenerator("images");
     const saveImages = createImagesSaver(generatePath, download);
-    const saveAuction = createAuctionSaver(auctionStorage, saveImages);
     const saveAuctionAction = createSaveAuctionAction(
-        auctions.getValidAuctionId(auctionStorage, createIdParser(idRegExps)),
-        fetchOwnersAuction,
-        saveAuction,
-        markExpired(auctionStorage));
+        createIdParser(idRegExps),
+        allegroClient.fetchAuction,
+        auctionStorage,
+        saveImages);
 
     return {
         auctionStorage,
@@ -46,7 +39,7 @@ exports.create = function createContext({ oAuth, allegroWebapi, idPatterns }) {
 function makeAllegroClient(allegroWebapi, ...methods) {
     const provider = createLazyProvider(
         () => allegroClientModule.initialize(allegroWebapi));
-    const makeMethod = _.partial(allegroClientModule.method, provider);
+    const makeMethod = partial(allegroClientModule.method, provider);
 
-    return _.mapValues(_.keyBy(methods), makeMethod);
+    return mapValues(keyBy(methods), makeMethod);
 }

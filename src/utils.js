@@ -1,5 +1,3 @@
-var q = require("q");
-
 exports.createLazyProvider = function createLazyProvider(factory) {
     var provided;
     

@@ -1,5 +1,5 @@
 const { format } = require("util");
-const { assign, clone, curry, find } = require("lodash");
+const { assign, clone, curry, find, identity } = require("lodash");
 const Maybe = require("data.maybe");
 
 const chai = require("chai"); const { expect } = chai;
@@ -7,7 +7,6 @@ const { stub, match } = require("sinon");
 chai.use(require("sinon-chai"));
 
 const auctions = require("./auctions");
-const createPathGenerator = require("./pathGenerator").create;
 const createIdParser = require("./idParser").create;
 
 describe("auctions", () => {
@@ -20,25 +19,16 @@ describe("auctions", () => {
         download = stub().returns(Promise.resolve());
         fetchAuction = stub();
         auctionsStorage = dummyStorage();
-        saveAuctionAction = create({ download, fetchAuction, auctionsStorage });
+        saveAuctionAction = auctions.createSaveAuctionAction(
+            createIdParser([/(\d+)/]),
+            fetchAuction,
+            auctionsStorage,
+            auctions.createImagesSaver(identity, download));
     });
 
     const SESSION = "session_id";
     const USER = "some_user";
     const ID = "123";
-
-    const givenAuction = (auction = { }) =>
-        fetchAuction
-            .withArgs(SESSION, auction.id || ID)
-            .returns(Promise.resolve(Maybe.Just(
-                assign({ id: ID, endingTime: 1234567, images: [] }, auction))));
-
-    const givenNoAuction = () =>
-        fetchAuction
-            .withArgs(SESSION, ID)
-            .returns(Promise.resolve(Maybe.Nothing()));
-
-    const saveAuction = () => saveAuctionAction(SESSION, USER, ID);
 
     it("saves auction for given user", () => {
         givenAuction();
@@ -86,9 +76,7 @@ describe("auctions", () => {
         download.returns(Promise.resolve());
 
         return saveAuction()
-            .then(() => {
-                return saveAuction();
-            })
+            .then(saveAuction)
             .then(...expectRejection((cause) => {
                 expect(cause).to.include({ status: 409 });
             }));
@@ -117,6 +105,19 @@ describe("auctions", () => {
                     .to.include({ expired: true });
             }));
     });
+    
+    const givenAuction = (auction = { }) =>
+        fetchAuction
+            .withArgs(SESSION, auction.id || ID)
+            .returns(Promise.resolve(Maybe.Just(
+                assign({ id: ID, endingTime: 1234567, images: [] }, auction))));
+
+    const givenNoAuction = () =>
+        fetchAuction
+            .withArgs(SESSION, ID)
+            .returns(Promise.resolve(Maybe.Nothing()));
+
+    const saveAuction = () => saveAuctionAction(SESSION, USER, ID);
 });
 
 const expectRejection = (onRejected) => ([
@@ -147,16 +148,4 @@ function dummyStorage() {
             return Promise.resolve(clone(find(auctions, spec)));
         }
     };
-}
-
-function create({ download, fetchAuction, auctionsStorage }) {
-    const generatePath = createPathGenerator("");
-    const fetchOwnersAuction = auctions.createOwnersAuctionFetcher(fetchAuction);
-    const saveImages = auctions.createImagesSaver(generatePath, download);
-    const saveAuction = auctions.createAuctionSaver(auctionsStorage, saveImages);
-    return auctions.createSaveAuctionAction(
-        auctions.getValidAuctionId(auctionsStorage, createIdParser([/(\d+)/])),
-        fetchOwnersAuction,
-        saveAuction,
-        curry(auctions.markExpired)(auctionsStorage));
 }

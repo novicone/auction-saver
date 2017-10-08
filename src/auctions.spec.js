@@ -1,5 +1,7 @@
+/* jshint mocha: true, expr: true */
+
 const { format } = require("util");
-const { assign, clone, curry, find, identity } = require("lodash");
+const { assign, clone, find, identity } = require("lodash");
 const Maybe = require("data.maybe");
 
 const chai = require("chai"); const { expect } = chai;
@@ -7,7 +9,6 @@ const { stub, match } = require("sinon");
 chai.use(require("sinon-chai"));
 
 const auctions = require("./auctions");
-const createIdParser = require("./idParser").create;
 
 describe("auctions", () => {
     let download;
@@ -20,7 +21,6 @@ describe("auctions", () => {
         fetchAuction = stub();
         auctionsStorage = dummyStorage();
         saveAuctionAction = auctions.createSaveAuctionAction(
-            createIdParser([/(\d+)/]),
             fetchAuction,
             auctionsStorage,
             auctions.createImagesSaver(identity, download));
@@ -88,7 +88,7 @@ describe("auctions", () => {
         return saveAuction()
             .then(...expectRejection((cause) => {
                 expect(cause).to.include({ status: 404 });
-            }))
+            }));
     });
 
     it("marks auction as expired if not found on subsequent action", () => {

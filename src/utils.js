@@ -1,11 +1,6 @@
-exports.createLazyProvider = function createLazyProvider(factory) {
-    var provided;
-    
-    return function provide() {
-        return provided || (provided = factory());
-    };
+exports.createLazyProvider = (make) => {
+    let provided;
+    return () => provided || (provided = make());
 };
 
-exports.raise = function raise(status, message) {
-    throw { status, message };
-}
+exports.raise = (status, message) => { throw { status, message }; };

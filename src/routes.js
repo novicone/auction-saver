@@ -1,12 +1,10 @@
 const { assign, curry, get, partial } = require("lodash");
 const { Router } = require("express");
 
-const { json, body, sessionParam, bodyParam, context, action } = require("./web");
-const auth = require("./auth/routes");
-const { allegroSessionIdParam } = auth;
+const auth = require("./auth/routes"); const { allegroSessionIdParam } = auth;
+const { json, sessionParam, bodyParam, context, action } = require("./web");
 
 const loginParam = sessionParam("login");
-const urlParam = bodyParam("url");
 
 module.exports = (app) => {
     install(app, "/", auth);
@@ -22,8 +20,8 @@ const install = (app, path, configurer) => {
 
 const auctions = (router) => {
     router.use(filterUnauthorized);
+    router.post("/", json(userAction("saveAuctionAction", userAction("parsedId", bodyParam("url")))));
     router.get("/", json(userAction("auctionStorage.findAll", auctionsQuery)));
-    router.post("/", json(userAction("saveAuctionAction", urlParam)));
 };
 
 const userAction = (fnPath, param) => action((ctx) => get(ctx, fnPath), authorizedContext, param);
@@ -43,7 +41,7 @@ const authorizedContext = (req) => {
         }),
         saveAuctionAction: partial(saveAuctionAction, session, login)
     });
-}
+};
 
 function auctionsQuery({ query }) {
     const makeBoolQuery = curry(boolQuery)(query);
@@ -67,6 +65,7 @@ function filterUnauthorized(req, res, next) {
 }
 
 function handleError(err, req, res, next) {
+    void next;
     console.error(err.stack || err);
 
     res.status(err.status || 500)

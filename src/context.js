@@ -21,17 +21,17 @@ exports.create = function createContext({ oAuth, allegroWebapi, idPatterns, imag
     const generatePath = createPathGenerator(imagesDir);
     const saveImages = createImagesSaver(generatePath, download);
     const saveAuctionAction = createSaveAuctionAction(
-        createIdParser(idRegExps),
         allegroClient.fetchAuction,
         auctionStorage,
         saveImages);
 
     return {
+        allegroClient,
         auctionStorage,
         generatePath,
         saveImages,
+        parsedId: auctions.parsedId(createIdParser(idRegExps)),
         saveAuctionAction,
-        allegroClient,
         oAuthRequests: new AllegroOAuthRequests(oAuth)
     };
 };

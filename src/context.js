@@ -26,7 +26,7 @@ exports.create = function createContext({ oAuth, allegroWebapi, idPatterns }) {
     const fetchOwnersAuction = createOwnersAuctionFetcher(allegroClient.fetchAuction);
     const generatePath = createPathGenerator("images");
     const saveImages = createImagesSaver(generatePath, download);
-    const saveAuction = createAuctionSaver(auctionStorage.save, saveImages);
+    const saveAuction = createAuctionSaver(auctionStorage, saveImages);
     const saveAuctionAction = createSaveAuctionAction(
         auctions.getValidAuctionId(auctionStorage, createIdParser(idRegExps)),
         fetchOwnersAuction,

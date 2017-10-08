@@ -14,35 +14,30 @@ exports.createSaveAuctionAction = (getValidAuctionId, fetchOwnersAuction, saveAu
                 }))
                 .then(saveAuction));
 
-exports.getValidAuctionId = ({ findOneBy }, parseId) =>
+exports.getValidAuctionId = (auctionStorage, parseId) =>
     (owner, url) =>
         parseId(url)
             .cata({
                 Nothing: () => raise(400, "WRONG_ID"),
-                Just: id =>
-                    findOneBy({ id, owner, finished: true })
+                Just: (id) =>
+                    auctionStorage.findOneBy({ id, owner, finished: true })
                         .then(auction =>
                             auction
-                                ? raise(406, "ALREADY_SAVED")
+                                ? raise(409, "ALREADY_SAVED")
                                 : id)
             });
 
-exports.createAuctionSaver = function createAuctionSaver(storeAuction, saveImages) {
-    return function saveAuction(auction) {
-        let storePromise = storeAuction(auction);
-
-        if (auction.finished) {
-            storePromise = storePromise.then(() => saveImages(auction));
-        }
-
-        return storePromise.then(() => auction);
-    };
+exports.createAuctionSaver = function createAuctionSaver(auctionStorage, saveImages) {
+    return (auction) => 
+        auctionStorage.save(auction)
+            .then(() => auction.finished && saveImages(auction))
+            .then(() => auction);
 };
 
 exports.createOwnersAuctionFetcher = function createOwnersAuctionFetcher(fetchAuction) {
-    return function fetchOwnersAuction(sessionHandle, owner, id) {
-        return fetchAuction(sessionHandle, id)
-            .then(liftM(auction => assign({ }, auction, { owner })));
+    return function fetchOwnersAuction(session, login, id) {
+        return fetchAuction(session, id)
+            .then(liftM(auction => assign(auction, { owner: login })));
     };
 };
 

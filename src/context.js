@@ -1,7 +1,7 @@
 const { partial, mapValues, keyBy } = require("lodash");
 
 const allegroClientModule = require("./allegroClient");
-const { createLazyProvider, raise } = require("./utils");
+const { createLazyProvider } = require("./utils");
 const auctions = require("./auctions");
 const download = require("./download");
 const storage = require("./storage");
@@ -13,12 +13,12 @@ const createIdParser = require("./idParser").create;
 const createSaveAuctionAction = auctions.createSaveAuctionAction;
 const createImagesSaver = auctions.createImagesSaver;
 
-exports.create = function createContext({ oAuth, allegroWebapi, idPatterns }) {
+exports.create = function createContext({ oAuth, allegroWebapi, idPatterns, imagesDir }) {
     const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction", "getUserLogin", "loginWithAccessToken");
     const auctionStorage = storage.auctionStorage();
     
     const idRegExps = idPatterns.map(pattern => new RegExp(pattern));
-    const generatePath = createPathGenerator("images");
+    const generatePath = createPathGenerator(imagesDir);
     const saveImages = createImagesSaver(generatePath, download);
     const saveAuctionAction = createSaveAuctionAction(
         createIdParser(idRegExps),

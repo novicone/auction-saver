@@ -1,7 +1,7 @@
 /* jshint mocha: true, expr: true */
 
 const { format } = require("util");
-const { assign, clone, find, identity } = require("lodash");
+const { assign, clone, find } = require("lodash");
 const Maybe = require("data.maybe");
 
 const chai = require("chai"); const { expect } = chai;
@@ -11,19 +11,24 @@ chai.use(require("sinon-chai"));
 const auctions = require("./auctions");
 
 describe("auctions", () => {
+    let generatePath;
     let download;
     let fetchAuction;
     let auctionsStorage;
+    let notifySaved;
     let saveAuctionAction;
 
     beforeEach(() => {
-        download = stub().returns(Promise.resolve());
+        download = stub().resolves();
         fetchAuction = stub();
         auctionsStorage = dummyStorage();
+        notifySaved = stub().resolves();
+        generatePath = stub();
         saveAuctionAction = auctions.createSaveAuctionAction(
             fetchAuction,
             auctionsStorage,
-            auctions.createImagesSaver(identity, download));
+            auctions.createImagesSaver(generatePath, download),
+            notifySaved);
     });
 
     const SESSION = "session_id";
@@ -46,6 +51,15 @@ describe("auctions", () => {
             expect(download).to.have.been.calledTwice;
             expect(download).to.have.been.calledWith("/foo", match.any);
             expect(download).to.have.been.calledWith("/bar", match.any);
+        });
+    });
+
+    it("notifies about saved auction", () => {
+        generatePath.callsFake((_, number) => `image:${number}`);
+        const auction = givenAuction({ finished: true, images: ["/foo", "/bar"] });
+
+        return saveAuction().then(() => {
+            expect(notifySaved).to.have.been.calledWith({ auction, images: ["image:1", "image:2"] });
         });
     });
 
@@ -73,7 +87,7 @@ describe("auctions", () => {
 
     it("reports conflict when finished auction already saved", () => {
         givenAuction({ finished: true });
-        download.returns(Promise.resolve());
+        download.resolves();
 
         return saveAuction()
             .then(saveAuction)
@@ -106,16 +120,20 @@ describe("auctions", () => {
             }));
     });
     
-    const givenAuction = (auction = { }) =>
+    const givenAuction = (props = { }) => {
+        const auction = assign({ id: ID, endingTime: 1234567, images: [] }, props);
+
         fetchAuction
             .withArgs(SESSION, auction.id || ID)
-            .returns(Promise.resolve(Maybe.Just(
-                assign({ id: ID, endingTime: 1234567, images: [] }, auction))));
+            .resolves(Maybe.Just(auction));
+
+        return auction;
+    };
 
     const givenNoAuction = () =>
         fetchAuction
             .withArgs(SESSION, ID)
-            .returns(Promise.resolve(Maybe.Nothing()));
+            .resolves(Maybe.Nothing());
 
     const saveAuction = () => saveAuctionAction(SESSION, USER, ID);
 });

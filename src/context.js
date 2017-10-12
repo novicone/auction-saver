@@ -10,10 +10,16 @@ const AllegroOAuthRequests = require("./auth/AllegroOAuthRequests");
 const createPathGenerator = require("./pathGenerator").create;
 const createIdParser = require("./idParser").create;
 
+const pushAuctions = require("./pushAuctions");
+
 const createSaveAuctionAction = auctions.createSaveAuctionAction;
 const createImagesSaver = auctions.createImagesSaver;
 
-exports.create = function createContext({ oAuth, allegroWebapi, idPatterns, imagesDir }) {
+exports.create = function createContext(config) {
+    const { oAuth, allegroWebapi, idPatterns, imagesDir, push } = config;
+    
+    const { pushBacklog } = pushAuctions.create(push);
+
     const allegroClient = makeAllegroClient(allegroWebapi, "login", "getMyData", "fetchAuction", "getUserLogin", "loginWithAccessToken");
     const auctionStorage = storage.auctionStorage();
     
@@ -23,7 +29,8 @@ exports.create = function createContext({ oAuth, allegroWebapi, idPatterns, imag
     const saveAuctionAction = createSaveAuctionAction(
         allegroClient.fetchAuction,
         auctionStorage,
-        saveImages);
+        saveImages,
+        (data) => pushBacklog.add(data));
 
     return {
         allegroClient,

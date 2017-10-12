@@ -4,16 +4,9 @@ var Datastore = require("nedb");
 exports.auctionStorage = createAuctionsStorage;
 
 function createAuctionsStorage() {
-    var db = new Datastore({ filename: "auctions.db", autoload: true });
+    const db = new Datastore({ filename: "auctions.db", autoload: true });
     
-    var find = q.nbind(db.find, db);
-    var update = q.nbind(db.update, db);
-    var findOneBy = function(criteria) {
-        return find(criteria)
-            .then(function(auctions) {
-                return auctions[0];
-            });
-    };
+    const update = q.nbind(db.update, db);
     
     return {
         save: function(auction) {
@@ -22,12 +15,9 @@ function createAuctionsStorage() {
         update: function(owner, id, props) {
             return update({ owner, id }, { $set: props });
         },
-        findOne: function(id) {
-            return findOneBy({ _id: id });
-        },
-        findOneBy: findOneBy,
+        findOneBy: q.nbind(db.findOne, db),
         findAll: function(owner, query) {
-            var cursor = db
+            const cursor = db
                 .find(Object.assign({ owner }, query))
                 .sort({ endingTime: -1 });
             

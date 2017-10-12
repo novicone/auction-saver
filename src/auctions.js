@@ -2,7 +2,7 @@ const { assign } = require("lodash");
 
 const { raise } = require("./utils");
                 
-exports.createSaveAuctionAction = (fetchAuction, auctionStorage, saveImages) =>
+exports.createSaveAuctionAction = (fetchAuction, auctionStorage, saveImages, notifyAuctionSaved = () => {}) =>
     (session, owner, id) => {
         const doSaveAuction = () => 
             checkNotAlreadySaved()
@@ -26,7 +26,9 @@ exports.createSaveAuctionAction = (fetchAuction, auctionStorage, saveImages) =>
 
         const save = (auction) => 
             auctionStorage.save(auction)
-                .then(() => auction.finished && saveImages(auction));
+                .then(() => auction.finished
+                    && saveImages(auction)
+                        .then((images) => notifyAuctionSaved({ auction, images })));
 
         return doSaveAuction();
     };
@@ -34,8 +36,11 @@ exports.createSaveAuctionAction = (fetchAuction, auctionStorage, saveImages) =>
 exports.createImagesSaver = function createImagesSaver(generatePath, download) {
     return (auction) =>
         Promise.all(auction.images
-            .map((imageUrl, i) =>
-                download(imageUrl, generatePath(auction, i + 1))));
+            .map((imageUrl, i) => {
+                const path = generatePath(auction, i + 1);
+                return download(imageUrl, path)
+                    .then(() => path);
+            }));
 };
 
 exports.parsedId = (parseId) => (url) => parseId(url) || raise(400, "WRONG_ID");

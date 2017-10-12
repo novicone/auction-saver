@@ -61,8 +61,8 @@ function initializeApi({ key, wsdl }) {
                             getDesc: 1,
                             getImageUrl: 1,
                         })
-                        .then(info => Maybe.Just(mapInfoToAuction(info)))
-                        .catch(error => {
+                        .then((info) => Maybe.Just(mapInfoToAuction(info)))
+                        .catch((error) => {
                             switch(error.faultcode) {
                                 case "ERR_INVALID_ITEM_ID":
                                     return Maybe.Nothing();
@@ -97,7 +97,8 @@ function mapInfoToAuction(info) {
         reservePrice: itReservePrice < 0,
         images: info.itemImgList.item
             .filter(image => image.imageType === 3)
-            .map(image => image.imageUrl)
+            .map(image => image.imageUrl),
+        categories: info.itemCatPath.item.map(({ catId }) => parseInt(catId))
     };
 }
 

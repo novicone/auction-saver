@@ -35,7 +35,7 @@ const anyCategoryIn = (allowedCategories) =>
         !!intersection(allowedCategories, categories).length;
 
 const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
-    console.log(`Calling Marek API with auction.id=${auction.id}`);
+    console.log(`Calling Marek API {auction.id=${auction.id}}`);
 
     return request({ 
             uri: apiUri,
@@ -53,10 +53,14 @@ const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
         })
         .then(({ status, message }) => {
             if (status !== 1) {
-                console.error(`Marek returned (status=${status}, message=${message})`);
+                console.error(`Marek returned (status=${status}, message=${message}) {auction.id=${auction.id}}`);
                 throw new Error(`Unexpected Marek status: ${status}`);
             }
-            console.log(`Marek API received auction.id=${auction.id}`);
+            console.log(`Marek API success {auction.id=${auction.id}}`);
+        })
+        .catch((error) => {
+            console.error(`Marek API call failed {auction.id=${auction.id}}`, error);
+            throw error;
         });
 };
 

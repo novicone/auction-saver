@@ -52,7 +52,7 @@ const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
             }
         })
         .then(({ status, message }) => {
-            if (status !== 1) {
+            if (parseInt(status) !== 1) {
                 console.error(`Marek returned (status=${status}, message=${message}) {auction.id=${auction.id}}`);
                 throw new Error(`Unexpected Marek status: ${status}`);
             }

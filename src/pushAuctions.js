@@ -35,7 +35,9 @@ const anyCategoryIn = (allowedCategories) =>
         !!intersection(allowedCategories, categories).length;
 
 const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
-    console.log(`Calling Marek API {auction.id=${auction.id}}`);
+    const idTrace = `{auction.id=${auction.id}}`;
+
+    console.log(`Calling Marek API ${idTrace}`);
 
     return request({ 
             uri: apiUri,
@@ -53,18 +55,23 @@ const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
         })
         .then(({ status, message }) => {
             if (parseInt(status) !== 1) {
-                console.error(`Marek returned (status=${status}, message=${message}) {auction.id=${auction.id}}`);
-                throw new Error(`Unexpected Marek status: ${status}`);
+                if (message === "Aukcja o podanym numerze już istnieje.") {
+                    console.warn(`Auction already there ${idTrace}`);
+                } else {
+                    console.error(`Marek returned (status=${status}, message=${message}) ${idTrace}`);
+                    throw new Error(`Unexpected Marek status: ${status}`);
+                }
+            } else {
+                console.log(`Marek API success ${idTrace}`);
             }
-            console.log(`Marek API success {auction.id=${auction.id}}`);
         })
         .catch((error) => {
-            console.error(`Marek API call failed {auction.id=${auction.id}}`, error);
+            console.error(`Marek API call failed ${idTrace}`, error);
             throw error;
         });
 };
 
-const makePathToUri = (selfUri) => (path) => selfUri + path.replace("\\", "/");
+const makePathToUri = (selfUri) => (path) => encodeURI(selfUri + path.replace("\\", "/"));
 
 const preventConcurrent = (job) => {
     let running = false;

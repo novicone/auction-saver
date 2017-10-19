@@ -35,41 +35,68 @@ const anyCategoryIn = (allowedCategories) =>
         !!intersection(allowedCategories, categories).length;
 
 const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
-    const idTrace = `{auction.id=${auction.id}}`;
+    const logger = makeLogger(`[auction.id=${auction.id}]`);
 
-    console.log(`Calling Marek API ${idTrace}`);
+    const onSuccess = ({ status, message }) => {
+        if (parseInt(status) !== 1) {
+            if (message === "Aukcja o podanym numerze już istnieje.") {
+                logger.warn("Duplicate auction, skipping.");
+            } else {
+                logger.error(`Marek returned (status=${status}, message=${message})`);
+                throw new Error(`Unexpected Marek status: ${status}`);
+            }
+        } else {
+            logger.log("Marek API success");
+        }
+    };
+    const onError = (error) => {
+        logger.error("Marek API call failed", error);
+        throw error;
+    };
+
+    const body = {
+        number: auction.id,
+        name: auction.name,
+        price: auction.price,
+        datetime: formatDate(auction.endingTime),
+        photos: images.map(pathToUri),
+        saler: auction.seller
+    };
+    
+    logger.log("Calling Marek API", body);
 
     return request({ 
             uri: apiUri,
             method: "POST",
             json: true,
             auth,
-            body: {
-                number: auction.id,
-                name: auction.name,
-                price: auction.price,
-                datetime: auction.endingTime,
-                photos: images.map(pathToUri),
-                saler: auction.seller
-            }
+            body
         })
-        .then(({ status, message }) => {
-            if (parseInt(status) !== 1) {
-                if (message === "Aukcja o podanym numerze już istnieje.") {
-                    console.warn(`Auction already there ${idTrace}`);
-                } else {
-                    console.error(`Marek returned (status=${status}, message=${message}) ${idTrace}`);
-                    throw new Error(`Unexpected Marek status: ${status}`);
-                }
-            } else {
-                console.log(`Marek API success ${idTrace}`);
-            }
-        })
-        .catch((error) => {
-            console.error(`Marek API call failed ${idTrace}`, error);
-            throw error;
-        });
+        .then(onSuccess, onError);
 };
+
+const makeLogger = (context) => new Proxy(console, {
+    get(target, name) {
+        if (!console[name]) {
+            return console[name];
+        }
+        return (...args) => console[name].apply(console, [...args, context]);
+    }
+});
+
+const formatDate = (timestamp) => {
+    const [month, day, year] = 
+        new Date(timestamp * 1000)
+            .toLocaleString("en-US", {
+                timeZone: "Europe/Warsaw",
+                year: "numeric",
+                month: "numeric",
+                day: "numeric"
+            })
+            .split("/");
+    return [year, month, day].join("-");
+};
+exports.formatDate = formatDate;
 
 const makePathToUri = (selfUri) => (path) => encodeURI(selfUri + path.replace("\\", "/"));
 

@@ -57,3 +57,9 @@ describe("pushAuctions job", () => {
 
     const item = (id, categories) => ({ auction: { id: 1, categories }, images: ["a", "b"] });
 });
+
+describe("pushAuctions formatDate", () => {
+    it("formats date", () => {
+        expect(pushAuctions.formatDate(1508435801)).to.equal("2017-10-19");
+    })
+});

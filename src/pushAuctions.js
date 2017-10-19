@@ -60,12 +60,14 @@ const callMarekApi = (apiUri, auth, pathToUri) => ({ auction, images }) => {
         price: auction.price,
         datetime: formatDate(auction.endingTime),
         photos: images.map(pathToUri),
-        saler: auction.seller
+        saler: auction.seller,
+        sold: auction.sold,
+        reservePrice: auction.reservePrice
     };
     
     logger.log("Calling Marek API", body);
 
-    return request({ 
+    return request({
             uri: apiUri,
             method: "POST",
             json: true,
